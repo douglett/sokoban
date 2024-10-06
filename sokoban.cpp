@@ -9,7 +9,7 @@ SDLmanager sdl;
 GFX gfx;
 DPad dpad;
 const int TSIZE = 16;
-int tmap = 0;
+int tmap = 0, tset = 0;
 
 struct Actor {
 	int x, y;
@@ -24,25 +24,28 @@ void level2map(const vector<string>& level) {
 	for (auto s : level)
 		if ((int)s.length() > w) w = s.length();
 	auto& map = gfx.getmap(tmap);
-	map.twidth = w;
-	map.theight = h;
+	map.tw = w;
+	map.th = h;
 	map.data.resize(w * h, 0);
 
-	for (int y = 0; y < map.theight; y++)
-	for (int x = 0; x < map.twidth; x++) {
-		char c = (int)level[y].size() < x ? level[y][x] : ' ';
-		int t = 0;
-		if      (c == ' ')  t = 0;
-		else if (c == '#')  t = -1;
-		else if (c == '.')  t = -2;
-		else if (c == '$')  t = 0,  boxes.push_back({ x, y });
-		else if (c == '@')  t = 0,  player.x = x, player.y = y;
-		map.data[ y * w + x ] = t;
+	for (int y = 0; y < map.th; y++) {
+		for (int x = 0; x < map.tw; x++) {
+			char c = x < (int)level[y].size() ? level[y][x] : '_';
+			int t = 0;
+			if      (c == ' ')  t = 1;
+			else if (c == '_')  t = 0;
+			else if (c == '#')  t = 3;
+			else if (c == '.')  t = 2;
+			else if (c == '$')  t = 1,  boxes.push_back({ x, y });
+			else if (c == '@')  t = 1,  player.x = x, player.y = y;
+			map.data[ y * w + x ] = t;
+			cout << t << ' ';
+		}
+		cout << endl;
 	}
 }
 
 void update() {
-
 }
 
 void repaint() {
@@ -56,7 +59,11 @@ int main(int argc, char* args[]) {
 	sdl.init();
 	gfx.init(160, 160);
 
-	tmap = gfx.makemap(5, 5, TSIZE, 0);
+	tset = sdl.makebmp(gfx, "tiles.bmp");
+	tmap = gfx.makemap(5, 5, TSIZE, tset);
+
+	// load map 1
+	level2map(level1);
 
 	while (!sdl.quit) {
 		update();
