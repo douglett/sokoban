@@ -59,8 +59,7 @@ void level2map(const vector<string>& level) {
 }
 
 void update() {
-	auto& pspr = gfx.getsprite(player.sprite);
-	
+	// get player input
 	int x = 0, y = 0;
 	if      (dpad.u == DPad::KDOWN)  y = -1;
 	else if (dpad.d == DPad::KDOWN)  y =  1;
@@ -68,7 +67,9 @@ void update() {
 	else if (dpad.r == DPad::KDOWN)  x =  1;
 	else if (dpad.b == DPad::KDOWN)  level2map(MINICOSMOS[1]);
 
+	// move player
 	int tx = x * TSIZE, ty = y * TSIZE;
+	auto& pspr = gfx.getsprite(player.sprite);
 	if ((x || y) && !gfx.collide_map(pspr, tx, ty)) {
 		if (gfx.collide_sprite(pspr, tx, ty)) {
 			auto& box = gfx.getsprite( gfx.collisions_sprite.at(0) );
@@ -84,6 +85,16 @@ void update() {
 			pspr.pos.y += ty;
 		}
 	}
+
+	// calculate win
+	int onpoint = 0;
+	for (auto b : boxes) {
+		auto& box = gfx.getsprite(b);
+		if (gfx.mapatpx( gfx.getmap(tmap), box.pos.x, box.pos.y ) == 2)
+			onpoint++;
+	}
+	if (onpoint == (int)boxes.size())
+		printf("win\n");
 }
 
 void repaint() {
