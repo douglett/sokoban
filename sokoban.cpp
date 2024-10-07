@@ -9,15 +9,26 @@ SDLmanager sdl;
 GFX gfx;
 DPad dpad;
 const int TSIZE = 16;
-int tmap = 0, tset = 0;
+int tmap = 0, tsetimage = 0, pimage = 0;
 
 struct Actor {
-	int x, y;
+	int tx, ty;
+	int sprite;
 };
 Actor player;
 vector<Actor> boxes;
 
+void makebox(int tx, int ty) {
+	boxes.push_back({ tx, ty, gfx.makesprite(TSIZE, TSIZE, tsetimage) });
+	auto& spr = gfx.getsprite(boxes.back().sprite);
+	spr.src.x = 4 * TSIZE;
+	spr.pos.x = tx * TSIZE;
+	spr.pos.y = ty * TSIZE;
+}
+
 void level2map(const vector<string>& level) {
+	for (auto& box : boxes)
+		gfx.freesprite(box.sprite);
 	boxes = {};
 
 	int w = 0, h = level.size();
@@ -34,10 +45,10 @@ void level2map(const vector<string>& level) {
 			int t = 0;
 			if      (c == ' ')  t = 1;
 			else if (c == '_')  t = 0;
-			else if (c == '#')  t = 3;
+			else if (c == '#')  t = -3;
 			else if (c == '.')  t = 2;
-			else if (c == '$')  t = 1,  boxes.push_back({ x, y });
-			else if (c == '@')  t = 1,  player.x = x, player.y = y;
+			else if (c == '$')  t = 1,  makebox(x, y);
+			else if (c == '@')  t = 1,  player.tx = x, player.ty = y;
 			map.data[ y * w + x ] = t;
 			cout << t << ' ';
 		}
@@ -46,9 +57,33 @@ void level2map(const vector<string>& level) {
 }
 
 void update() {
+	auto& spr = gfx.getsprite(player.sprite);
+	if (dpad.u == DPad::KDOWN) {
+		if (!gfx.collide_all(spr, 0, -TSIZE))
+			player.ty--;
+	}
+	if (dpad.d == DPad::KDOWN) {
+		if (!gfx.collide_all(spr, 0, TSIZE))
+			player.ty++;
+	}
+	if (dpad.l == DPad::KDOWN) {
+		if (!gfx.collide_all(spr, -TSIZE, 0))
+			player.tx--;
+	}
+	if (dpad.r == DPad::KDOWN) {
+		if (!gfx.collide_all(spr, TSIZE, 0))
+			player.tx++;
+	}
 }
 
 void repaint() {
+	// update player sprite
+	auto& spr = gfx.getsprite(player.sprite);
+	spr.pos.x = TSIZE * player.tx;
+	spr.pos.y = TSIZE * player.ty;
+
+	// update boxes
+
 	gfx.fill(0xff000000);
 	gfx.drawscene();
 	gfx.print(sdl.fps, 144, 1);
@@ -58,9 +93,13 @@ void repaint() {
 int main(int argc, char* args[]) {
 	sdl.init();
 	gfx.init(160, 160);
+	gfx.flag_hit = 1;
 
-	tset = sdl.makebmp(gfx, "tiles.bmp");
-	tmap = gfx.makemap(5, 5, TSIZE, tset);
+	tsetimage = sdl.makebmp(gfx, "tiles.bmp");
+	tmap = gfx.makemap(5, 5, TSIZE, tsetimage);
+	pimage = sdl.makebmp(gfx, "player.bmp");
+	player.sprite = gfx.makesprite(TSIZE, TSIZE, pimage);
+	gfx.getsprite(player.sprite).src.x = TSIZE * 2;
 
 	// load map 1
 	level2map(level1);
