@@ -1,6 +1,6 @@
 OUT  = sokoban.exe
 SRC  = sokoban.cpp
-HEAD = ../scene/sdl.hpp ../scene/gfx.hpp ../scene/dpad.hpp
+HEAD = ../scene/sdl.hpp ../scene/gfx.hpp ../scene/dpad.hpp levels.hpp
 
 
 $(OUT): $(SRC) $(HEAD)

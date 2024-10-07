@@ -42,3 +42,20 @@ const vector<string> level3 = {
 "__##  ###",
 "___####",
 };
+
+
+const vector<vector<string>> MINICOSMOS = {
+{},
+// Level 1
+// 'MINICOSMOS 01'
+{
+"__#####",
+"###   #",
+"# $ # ##",
+"# #  . #",
+"#    # #",
+"## #   #",
+"_#@  ###",
+"_#####",
+}
+};

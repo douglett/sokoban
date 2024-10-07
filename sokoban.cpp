@@ -11,16 +11,14 @@ DPad dpad;
 const int TSIZE = 16;
 int tmap = 0, tsetimage = 0, pimage = 0;
 
-struct Actor {
-	int tx, ty;
+struct {
 	int sprite;
-};
-Actor player;
-vector<Actor> boxes;
+} player;
+vector<int> boxes;
 
 void makebox(int tx, int ty) {
-	boxes.push_back({ tx, ty, gfx.makesprite(TSIZE, TSIZE, tsetimage) });
-	auto& spr = gfx.getsprite(boxes.back().sprite);
+	boxes.push_back( gfx.makesprite(TSIZE, TSIZE, tsetimage) );
+	auto& spr = gfx.getsprite( boxes.back() );
 	spr.src.x = 4 * TSIZE;
 	spr.pos.x = tx * TSIZE;
 	spr.pos.y = ty * TSIZE;
@@ -28,7 +26,7 @@ void makebox(int tx, int ty) {
 
 void level2map(const vector<string>& level) {
 	for (auto& box : boxes)
-		gfx.freesprite(box.sprite);
+		gfx.freesprite(box);
 	boxes = {};
 
 	int w = 0, h = level.size();
@@ -39,6 +37,8 @@ void level2map(const vector<string>& level) {
 	map.th = h;
 	map.data.resize(w * h, 0);
 
+	auto& pspr = gfx.getsprite(player.sprite);
+
 	for (int y = 0; y < map.th; y++) {
 		for (int x = 0; x < map.tw; x++) {
 			char c = x < (int)level[y].size() ? level[y][x] : '_';
@@ -48,39 +48,49 @@ void level2map(const vector<string>& level) {
 			else if (c == '#')  t = -3;
 			else if (c == '.')  t = 2;
 			else if (c == '$')  t = 1,  makebox(x, y);
-			else if (c == '@')  t = 1,  player.tx = x, player.ty = y;
+			else if (c == '@')  t = 1,  pspr.pos.x = x * TSIZE, pspr.pos.y = y * TSIZE;
 			map.data[ y * w + x ] = t;
 			cout << t << ' ';
 		}
 		cout << endl;
 	}
+
+	printf("maps: %d, sprites: %d\n", (int)gfx.tilemaps.size(), (int)gfx.sprites.size());
 }
 
 void update() {
-	auto& spr = gfx.getsprite(player.sprite);
-	if (dpad.u == DPad::KDOWN) {
-		if (!gfx.collide_all(spr, 0, -TSIZE))
-			player.ty--;
-	}
-	if (dpad.d == DPad::KDOWN) {
-		if (!gfx.collide_all(spr, 0, TSIZE))
-			player.ty++;
-	}
-	if (dpad.l == DPad::KDOWN) {
-		if (!gfx.collide_all(spr, -TSIZE, 0))
-			player.tx--;
-	}
-	if (dpad.r == DPad::KDOWN) {
-		if (!gfx.collide_all(spr, TSIZE, 0))
-			player.tx++;
+	auto& pspr = gfx.getsprite(player.sprite);
+	
+	int x = 0, y = 0;
+	if      (dpad.u == DPad::KDOWN)  y = -1;
+	else if (dpad.d == DPad::KDOWN)  y =  1;
+	else if (dpad.l == DPad::KDOWN)  x = -1;
+	else if (dpad.r == DPad::KDOWN)  x =  1;
+	else if (dpad.b == DPad::KDOWN)  level2map(MINICOSMOS[1]);
+
+	int tx = x * TSIZE, ty = y * TSIZE;
+	if ((x || y) && !gfx.collide_map(pspr, tx, ty)) {
+		if (gfx.collide_sprite(pspr, tx, ty)) {
+			auto& box = gfx.getsprite( gfx.collisions_sprite.at(0) );
+			if (!gfx.collide_all(box, tx, ty)) {
+				box.pos.x += tx;
+				box.pos.y += ty;
+				pspr.pos.x += tx;
+				pspr.pos.y += ty;
+			}
+		}
+		else {
+			pspr.pos.x += tx;
+			pspr.pos.y += ty;
+		}
 	}
 }
 
 void repaint() {
 	// update player sprite
-	auto& spr = gfx.getsprite(player.sprite);
-	spr.pos.x = TSIZE * player.tx;
-	spr.pos.y = TSIZE * player.ty;
+	// auto& spr = gfx.getsprite(player.sprite);
+	// spr.pos.x = TSIZE * player.tx;
+	// spr.pos.y = TSIZE * player.ty;
 
 	// update boxes
 
@@ -102,7 +112,7 @@ int main(int argc, char* args[]) {
 	gfx.getsprite(player.sprite).src.x = TSIZE * 2;
 
 	// load map 1
-	level2map(level1);
+	level2map(MINICOSMOS[1]);
 
 	while (!sdl.quit) {
 		update();
