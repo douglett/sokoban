@@ -88,6 +88,7 @@ struct Game {
 		else if (dpad.d == DPad::KDOWN)  y =  1;
 		else if (dpad.l == DPad::KDOWN)  x = -1;
 		else if (dpad.r == DPad::KDOWN)  x =  1;
+		else if (dpad.a == DPad::KDOWN)  { switchstate(STATE_TITLE);  return; }
 		else if (dpad.b == DPad::KDOWN)  level2map(levelno);
 
 		// move player
@@ -215,13 +216,9 @@ int main(int argc, char* args[]) {
 
 	tsetimage = sdl.makebmp(gfx, "tiles.bmp");
 	pimage = sdl.makebmp(gfx, "player.bmp");
-	// game.init();
-	// titlescreen.init();
 	switchstate(STATE_TITLE);
 
 	while (!sdl.quit) {
-		// titlescreen.update();
-		// game.update();
 		update();
 		repaint();
 	}
