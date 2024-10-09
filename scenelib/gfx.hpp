@@ -6,8 +6,6 @@
 using namespace std;
 
 struct GFX {
-	static const uint32_t FONT_DATA[];
-	static const int  FONT_W = 4, FONT_H = 8;
 	struct Rect  { int x, y, w, h; };
 	struct Rectf { double x, y, w, h; };
 	struct Image { int w, h; vector<uint32_t> data; };
@@ -21,17 +19,21 @@ struct GFX {
 		vector<int> data;
 	};
 
-// private:
+	// global data
+	static const  uint32_t             FONT_DATA[];
+	static const  int                  FONT_W = 4, FONT_H = 8;
+	static inline Image                screen = {0}, fontface = {0};
+	static inline map<int, Image>      imagesgl;
+	static inline int                  pcounter = 1, flag_hit = 0, flag_hurt = 0;
+
+	// instance data
 	map<int, Image>      images;
 	map<int, Sprite>     sprites;
 	map<int, Tilemap>    tilemaps;
-// public:
-	Image                screen = {0}, fontface = {0};
-	int                  pcounter = 1, flag_hit = 0, flag_hurt = 0;
 	vector<int>          collisions_map, collisions_sprite;
 
-	// construct and initialize
-	void init(int w, int h) {
+	// construct and initialize main screen
+	static void init(int w, int h) {
 		// build screen with blank data
 		screen.w = w;
 		screen.h = h;
@@ -49,16 +51,24 @@ struct GFX {
 		}
 
 		// erase all previous data and reset
-		images = {};
-		sprites = {};
-		tilemaps = {};
-		pcounter = 1;
+		// images = {};
+		// sprites = {};
+		// tilemaps = {};
+		// pcounter = 1;
 	}
 
 	// make
 	int makeimage(int w, int h) {
 		int ptr = pcounter++;
 		auto& img = images[ptr] = {0};
+		img.w = w;
+		img.h = h;
+		img.data.resize(w * h, 0xff000000);
+		return ptr;
+	}
+	static int makeimagegl(int w, int h) {
+		int ptr = pcounter++;
+		auto& img = imagesgl[ptr] = {0};
 		img.w = w;
 		img.h = h;
 		img.data.resize(w * h, 0xff000000);
@@ -85,12 +95,12 @@ struct GFX {
 	}
 
 	// free
-	void freeimage(int ptr)  { images.erase(ptr); }
+	void freeimage(int ptr)  { images.erase(ptr);  imagesgl.erase(ptr); }
 	void freesprite(int ptr) { sprites.erase(ptr); }
 	void freemap(int ptr)    { tilemaps.erase(ptr); }
 
 	// get (TODO: null/free error checking)
-	Image&   getimage(int ptr)  { return images.at(ptr); }
+	Image&   getimage(int ptr)  { return imagesgl.count(ptr) ? imagesgl.at(ptr) : images.at(ptr); }
 	Sprite&  getsprite(int ptr) { return sprites.at(ptr); }
 	Tilemap& getmap(int ptr)    { return tilemaps.at(ptr); }
 

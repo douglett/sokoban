@@ -70,7 +70,7 @@ struct SDLmanager {
 			SDL_FreeSurface(bmp);
 			return 0;
 		}
-		int ptr = gfx.makeimage(bmp->w, bmp->h);
+		int ptr = gfx.makeimagegl(bmp->w, bmp->h);
 		auto& img = gfx.getimage(ptr);
 		uint8_t* data = (uint8_t*)bmp->pixels;
 		// convert BGR -> ARGB
