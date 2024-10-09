@@ -272,8 +272,8 @@ int main(int argc, char* args[]) {
 	gfx.init(160, 160);
 	// gfx.flag_hit = 1;
 
-	tsetimage = sdl.makebmp(gfx, "assets/tiles.bmp");
-	pimage = sdl.makebmp(gfx, "assets/player.bmp");
+	tsetimage = sdl.makebmp("assets/tiles.bmp");
+	pimage = sdl.makebmp("assets/player.bmp");
 	switchstate(STATE_TITLE);
 	// switchstate(STATE_MENU);
 

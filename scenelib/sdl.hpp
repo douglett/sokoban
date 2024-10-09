@@ -59,7 +59,7 @@ struct SDLmanager {
 		return 0;
 	}
 
-	int makebmp(GFX& gfx, const string& fname) {
+	int makebmp(const string& fname) {
 		auto* bmp = SDL_LoadBMP(fname.c_str());
 		if (bmp == NULL) {
 			printf( "Could not load bitmap \"%s\"! SDL_Error: %s\n", fname.c_str(), SDL_GetError() );
@@ -70,8 +70,8 @@ struct SDLmanager {
 			SDL_FreeSurface(bmp);
 			return 0;
 		}
-		int ptr = gfx.makeimagegl(bmp->w, bmp->h);
-		auto& img = gfx.getimage(ptr);
+		int ptr = GFX::makeimagegl(bmp->w, bmp->h);
+		auto& img = GFX::getimagegl(ptr);
 		uint8_t* data = (uint8_t*)bmp->pixels;
 		// convert BGR -> ARGB
 		for (int i = 0; i < bmp->w * bmp->h; i++) {

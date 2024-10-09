@@ -103,6 +103,7 @@ struct GFX {
 	Image&   getimage(int ptr)  { return imagesgl.count(ptr) ? imagesgl.at(ptr) : images.at(ptr); }
 	Sprite&  getsprite(int ptr) { return sprites.at(ptr); }
 	Tilemap& getmap(int ptr)    { return tilemaps.at(ptr); }
+	static Image& getimagegl(int ptr)  { return imagesgl.at(ptr); }
 
 	// collision
 	inline int collide_rect(const Rect& r1, const Rect& r2) {
@@ -221,9 +222,9 @@ struct GFX {
 			return;
 		uint32_t col = 0;
 		for (int y = 0; y < srect.h; y++)
-			if (y + dy >= 0 && y + dy < dst.h)
+			if (y + dy >= 0 && y + dy < dst.h && y + srect.y >= 0 && y + srect.y < src.h)
 				for (int x = 0; x < srect.w; x++)
-					if (x + dx >= 0 && x + dx < dst.w) {
+					if (x + dx >= 0 && x + dx < dst.w && x + srect.x >= 0 && x + srect.x < src.w) {
 						col = src.data[ (y + srect.y) * src.w + (x + srect.x) ];
 						// transparency check
 						if ((col >> 24) > 0)
