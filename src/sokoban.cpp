@@ -1,7 +1,7 @@
 #include <iostream>
-#include "sdl.hpp"
-#include "gfx.hpp"
-#include "dpad.hpp"
+#include "scenelib/sdl.hpp"
+#include "scenelib/gfx.hpp"
+#include "scenelib/dpad.hpp"
 #include "levels.hpp"
 using namespace std;
 
@@ -272,8 +272,8 @@ int main(int argc, char* args[]) {
 	gfx.init(160, 160);
 	// gfx.flag_hit = 1;
 
-	tsetimage = sdl.makebmp(gfx, "tiles.bmp");
-	pimage = sdl.makebmp(gfx, "player.bmp");
+	tsetimage = sdl.makebmp(gfx, "assets/tiles.bmp");
+	pimage = sdl.makebmp(gfx, "assets/player.bmp");
 	switchstate(STATE_TITLE);
 	// switchstate(STATE_MENU);
 
