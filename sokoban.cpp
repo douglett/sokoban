@@ -7,7 +7,8 @@ using namespace std;
 
 enum GAMESTATE {
 	STATE_TITLE,
-	STATE_GAME
+	STATE_GAME,
+	STATE_MENU,
 };
 SDLmanager sdl;
 GFX gfx;
@@ -32,8 +33,8 @@ struct Game {
 		tmap = gfx.makemap(5, 5, TSIZE, tsetimage);
 		playersprite = gfx.makesprite(TSIZE, TSIZE, pimage);
 		gfx.getsprite(playersprite).src.x = TSIZE * 2;
-		// load map 1
-		level2map(0);
+		// reload map data
+		level2map(levelno);
 	}
 
 	void makebox(int tx, int ty) {
@@ -88,8 +89,11 @@ struct Game {
 		else if (dpad.d == DPad::KDOWN)  y =  1;
 		else if (dpad.l == DPad::KDOWN)  x = -1;
 		else if (dpad.r == DPad::KDOWN)  x =  1;
-		else if (dpad.a == DPad::KDOWN)  { switchstate(STATE_TITLE);  return; }
 		else if (dpad.b == DPad::KDOWN)  level2map(levelno);
+		else if (dpad.a == DPad::KDOWN)  {
+			switchstate(STATE_MENU);
+			return;
+		}
 
 		// move player
 		int tx = x * TSIZE, ty = y * TSIZE;
@@ -125,13 +129,62 @@ struct Game {
 } game;
 
 
+struct Menu {
+	const vector<string> items = {
+		"back (b)",
+		"reset",
+		"quit",
+	};
+	const int LINE_SPACING = 12;
+	int menuimage = 0, bgsprite = 0, handsprite = 0;
+	int handpos = 0;
+
+	void init() {
+		if (menuimage < 1) {
+			menuimage = gfx.makeimage(12 * gfx.FONT_W, 5 * gfx.FONT_H);
+			auto& mimg = gfx.getimage(menuimage);
+			// background menu
+			// gfx.outline(mimg, 0xffffffff);
+			for (int i = 0; i < (int)items.size(); i++)
+				gfx.print(mimg, items[i], 0, i * LINE_SPACING);
+		}
+		// menu sprite
+		auto& mimg = gfx.getimage(menuimage);
+		bgsprite = gfx.makesprite(mimg.w, mimg.h, menuimage);
+		auto& bgspr = gfx.getsprite(bgsprite);
+		bgspr.pos.y = (gfx.screen.h - bgspr.pos.h) / 2;
+		bgspr.pos.x = (gfx.screen.w - bgspr.pos.w + 30) / 2;
+		// hand sprite
+		handsprite = gfx.makesprite(8, 8, pimage);
+		auto& hspr = gfx.getsprite(handsprite);
+		hspr.pos.y = bgspr.pos.y;
+		hspr.pos.x = bgspr.pos.x - 14;
+	}
+
+	void update() {
+		// move hand
+		if      (dpad.u == DPad::KDOWN)  handpos = max(0, handpos - 1);
+		else if (dpad.d == DPad::KDOWN)  handpos = min(int(items.size() - 1), handpos + 1);
+		else if (dpad.b == DPad::KDOWN)  {
+			switchstate(STATE_GAME);
+			return;
+		}
+
+		// update hand position
+		auto& hspr = gfx.getsprite(handsprite);
+		auto& bgspr = gfx.getsprite(bgsprite);
+		hspr.pos.y = bgspr.pos.y + LINE_SPACING * handpos;
+	}
+} menu;
+
+
 struct TitleScreen {
 	const string title = "Sokoban";
 	int titleimage = 0, titlesprite = 0, playersprite = 0;
 	int dir = 2, delta = 0;
 
 	void init() {
-		if (!titleimage) {
+		if (titleimage < 1) {
 			titleimage = gfx.makeimage(title.size() * gfx.FONT_W, gfx.FONT_H);
 			auto& img = gfx.getimage(titleimage);
 			gfx.print(img, title, 0, 0);
@@ -179,7 +232,10 @@ struct TitleScreen {
 		spr.src.x = dir * TSIZE;
 
 		// start game on button
-		if (dpad.a == DPad::KDOWN)  switchstate(STATE_GAME);
+		if (dpad.a == DPad::KDOWN) {
+			switchstate(STATE_GAME);
+			game.level2map(0);
+		}
 	}
 } titlescreen;
 
@@ -191,6 +247,7 @@ void switchstate(GAMESTATE state) {
 	switch (gamestate) {
 		case STATE_TITLE:  titlescreen.init();  break;
 		case STATE_GAME:   game.init();  break;
+		case STATE_MENU:   menu.init();  break;
 	}
 }
 
@@ -198,6 +255,7 @@ void update() {
 	switch (gamestate) {
 		case STATE_TITLE:  titlescreen.update();  break;
 		case STATE_GAME:   game.update();  break;
+		case STATE_MENU:   menu.update();  break;
 	}
 }
 
@@ -217,6 +275,7 @@ int main(int argc, char* args[]) {
 	tsetimage = sdl.makebmp(gfx, "tiles.bmp");
 	pimage = sdl.makebmp(gfx, "player.bmp");
 	switchstate(STATE_TITLE);
+	// switchstate(STATE_MENU);
 
 	while (!sdl.quit) {
 		update();
