@@ -112,23 +112,52 @@ struct SceneGame : Scene {
 	void update() {
 		if (anim.dx || anim.dy)
 			animatemove();
+		else if (checkwin())
+			;
 		else
 			playerinput();
 	}
 
+	int checkwin() {
+		// calculate boxes in place
+		int onpoint = 0;
+		for (auto b : boxes) {
+			auto& box = gfx.getsprite( b );
+			if (gfx.mapatpx( gfx.getmap(tmap), box.pos.x, box.pos.y ) == 2)
+				onpoint++;
+		}
+		// check win
+		if (onpoint == (int)boxes.size()) {
+			printf("win\n");
+			level2map(levelno + 1);
+			return 1;
+		}
+		return 0;
+	}
+
 	void animatemove() {
+		static const int WALKSPEED = 1;
 		// move player
 		auto& spr = gfx.getsprite( playersprite );
-		spr.pos.x += anim.dx;
-		spr.pos.y += anim.dy;
+		spr.pos.x += anim.dx * WALKSPEED;
+		spr.pos.y += anim.dy * WALKSPEED;
+		// set animation
+		int dir = 0;
+		if      (anim.dy == -1)  dir = 0;
+		else if (anim.dx ==  1)  dir = 1;
+		else if (anim.dy ==  1)  dir = 2;
+		else if (anim.dx == -1)  dir = 3;
+		if (anim.delta < TSIZE / 2)  dir += 4;
+		spr.src.x = dir * TSIZE;
 		// move pushed box
 		if (anim.box > 0) {
 			auto& box = gfx.getsprite( anim.box );
-			box.pos.x += anim.dx;
-			box.pos.y += anim.dy;
+			box.pos.x += anim.dx * WALKSPEED;
+			box.pos.y += anim.dy * WALKSPEED;
 		}
 		// next
-		if (++anim.delta == TSIZE)
+		anim.delta += WALKSPEED;
+		if (anim.delta == TSIZE)
 			anim = {0};
 	}
 
@@ -166,18 +195,6 @@ struct SceneGame : Scene {
 				anim = { x, y };
 				animatemove();
 			}
-		}
-
-		// calculate win
-		int onpoint = 0;
-		for (auto b : boxes) {
-			auto& box = gfx.getsprite( b );
-			if (gfx.mapatpx( gfx.getmap(tmap), box.pos.x, box.pos.y ) == 2)
-				onpoint++;
-		}
-		if (onpoint == (int)boxes.size()) {
-			printf("win\n");
-			level2map(levelno + 1);
 		}
 	}
 };
