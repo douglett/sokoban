@@ -26,6 +26,10 @@ struct SceneGame : Scene {
 		spr.pos.y = ty * TSIZE;
 	}
 
+	void reset() {
+		level2map(levelno);
+	}
+
 	void level2map(int _levelno) {
 		auto& level = MINICOSMOS.at(_levelno);
 		levelno = _levelno;

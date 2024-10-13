@@ -13,12 +13,6 @@ SceneGame  game;
 SceneMenu  menu;
 
 
-// paint menu scene on top of game scene
-void SceneMenu::paint() {
-	game.paint();
-	gfx.drawscene();
-}
-
 // switch between scenes
 void Scene::switchscene(GAMESCENE scene) {
 	// title -> ingame : load level 1

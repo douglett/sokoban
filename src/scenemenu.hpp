@@ -1,5 +1,6 @@
 #pragma once
 #include "global.hpp"
+#include "scenegame.hpp"
 using namespace std;
 
 struct SceneMenu : Scene {
@@ -38,6 +39,8 @@ struct SceneMenu : Scene {
 	}
 
 	void update() {
+		extern SceneGame game;
+
 		// move hand
 		if      (dpad.u == DPad::KDOWN)  handpos = max(0, handpos - 1);
 		else if (dpad.d == DPad::KDOWN)  handpos = min(int(items.size() - 1), handpos + 1);
@@ -45,11 +48,29 @@ struct SceneMenu : Scene {
 			switchscene(SCENE_GAME);
 			return;
 		}
+		else if (dpad.a == DPad::KDOWN)  {
+			switch (handpos) {
+				case 0:  break;
+				case 1:
+					game.reset();
+					switchscene(SCENE_GAME);
+					break;
+				case 2:
+					switchscene(SCENE_TITLE);
+					break;
+			}
+		}
 
 		// update hand position
 		auto& hspr = gfx.getsprite(handsprite);
 		hspr.pos.y = TEXT_OFFSET_Y + TEXT_LINE_SPACING * handpos;
 	}
 
-	void paint();
+	void paint() {
+		extern SceneGame game;
+		
+		// paint menu scene on top of game scene
+		game.paint();
+		gfx.drawscene();
+	}
 };
