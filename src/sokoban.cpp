@@ -32,11 +32,11 @@ void Scene::switchscene(GAMESCENE scene) {
 // get currently active scene
 Scene& getscene() {
 	switch (Scene::currentscene) {
-		case Scene::SCENE_TITLE:    return title;
 		case Scene::SCENE_GAME:     return game;
 		case Scene::SCENE_MENU:     return menu;
+		default:
+		case Scene::SCENE_TITLE:    return title;
 	}
-	return title;
 }
 
 void update() {

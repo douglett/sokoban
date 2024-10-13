@@ -14,15 +14,16 @@ struct SceneMenu : Scene {
 	int handpos = 0;
 
 	void init() {
+		// background menu image
 		if (menuimage < 1) {
 			menuimage = gfx.makeimage(12 * gfx.FONT_W, TEXT_LINE_SPACING * items.size() + TEXT_OFFSET_Y * 2);
 			auto& mimg = gfx.getimage(menuimage);
-			// background menu
 			gfx.fill(mimg, 0xff0000ff);
 			gfx.outline(mimg, 0xffffffff, { 1, 1, mimg.w - 2, mimg.h - 2 });
 			for (int i = 0; i < (int)items.size(); i++)
 				gfx.print(mimg, items[i], TEXT_OFFSET_X, TEXT_OFFSET_Y + i * TEXT_LINE_SPACING);
 		}
+
 		// menu sprite
 		auto& mimg = gfx.getimage(menuimage);
 		bgsprite = gfx.makesprite(mimg.w, mimg.h, menuimage);
@@ -31,6 +32,9 @@ struct SceneMenu : Scene {
 		handsprite = gfx.makesprite(8, 8, pimage);
 		auto& hspr = gfx.getsprite(handsprite);
 		hspr.pos.y = TEXT_OFFSET_Y + TEXT_LINE_SPACING * handpos;
+
+		// move the whole scene around the screen
+		gfx.sceneoffset.x = gfx.sceneoffset.y = 10;
 	}
 
 	void update() {

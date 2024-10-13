@@ -31,6 +31,7 @@ struct GFX {
 	map<int, Sprite>     sprites;
 	map<int, Tilemap>    tilemaps;
 	vector<int>          collisions_map, collisions_sprite;
+	Rect                 sceneoffset = { 0, 0 };
 
 	// construct and initialize main screen
 	static void init(int w, int h) {
@@ -49,12 +50,6 @@ struct GFX {
 			for (int j = 0; j < 32; j++)
 				fontface.data[ i * 32 + (31 - j) ] = data[j] ? 0xffffffff : 0;  // reverse bit order here
 		}
-
-		// erase all previous data and reset
-		// images = {};
-		// sprites = {};
-		// tilemaps = {};
-		// pcounter = 1;
 	}
 
 	// make
@@ -257,9 +252,9 @@ struct GFX {
 			for (int y = 0; y < tmap.th; y++)
 			for (int x = 0; x < tmap.tw; x++) {
 				src.x = abs( tmap.data[ y * tmap.tw + x ] ) * tmap.tsize;
-				blit( getimage(tmap.image), tmap.x + x * tmap.tsize, tmap.y + y * tmap.tsize, src );
+				blit( getimage(tmap.image), sceneoffset.x + tmap.x + x * tmap.tsize, sceneoffset.y + tmap.y + y * tmap.tsize, src );
 				if (flag_hit && tmap.data[ y * tmap.tw + x ] < 0)
-					outline( 0xffff7700, { tmap.x + x * tmap.tsize, tmap.y + y * tmap.tsize, tmap.tsize, tmap.tsize } );
+					outline( 0xffff7700, { sceneoffset.x + tmap.x + x * tmap.tsize, sceneoffset.y + tmap.y + y * tmap.tsize, tmap.tsize, tmap.tsize } );
 			}
 		}
 		// draw sprites
@@ -268,11 +263,11 @@ struct GFX {
 				continue;
 			sprite.src.w = sprite.pos.w;
 			sprite.src.h = sprite.pos.h;
-			blit( getimage(sprite.image), sprite.pos.x, sprite.pos.y, sprite.src );
+			blit( getimage(sprite.image), sceneoffset.x + sprite.pos.x, sceneoffset.y + sprite.pos.y, sprite.src );
 			if (flag_hit)
-				outline( 0xffff0000, { sprite.pos.x + sprite.hit.x, sprite.pos.y + sprite.hit.y, sprite.hit.w, sprite.hit.h } );
+				outline( 0xffff0000, { sceneoffset.x + sprite.pos.x + sprite.hit.x, sceneoffset.y + sprite.pos.y + sprite.hit.y, sprite.hit.w, sprite.hit.h } );
 			if (flag_hurt)
-				outline( 0xff00ff00, { sprite.pos.x + sprite.hurt.x, sprite.pos.y + sprite.hurt.y, sprite.hurt.w, sprite.hurt.h } );
+				outline( 0xff00ff00, { sceneoffset.x + sprite.pos.x + sprite.hurt.x, sceneoffset.y + sprite.pos.y + sprite.hurt.y, sprite.hurt.w, sprite.hurt.h } );
 		}
 	}
 };
