@@ -15,7 +15,7 @@ struct SceneGame : Scene {
 		playersprite = gfx.makesprite(TSIZE, TSIZE, pimage);
 		gfx.getsprite(playersprite).src.x = TSIZE * 2;
 		// reload map data
-		level2map(levelno);
+		// level2map(levelno);
 	}
 
 	void makebox(int tx, int ty) {

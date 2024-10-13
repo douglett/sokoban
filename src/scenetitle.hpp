@@ -49,10 +49,8 @@ struct SceneTitle : Scene {
 		spr.src.x = dir * TSIZE;
 
 		// start game on button
-		if (dpad.a == DPad::KDOWN) {
+		if (dpad.a == DPad::KDOWN)
 			switchscene(SCENE_GAME);
-			// game.level2map(0);
-		}
 	}
 
 	void paint() {

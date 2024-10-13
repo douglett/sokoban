@@ -8,31 +8,29 @@ struct SceneMenu : Scene {
 		"reset",
 		"quit",
 	};
-	const int LINE_SPACING = 12;
+	const int TEXT_LINE_SPACING = 12, TEXT_OFFSET_X = 12, TEXT_OFFSET_Y = 4;
 	GFX gfx;
 	int menuimage = 0, bgsprite = 0, handsprite = 0;
 	int handpos = 0;
 
 	void init() {
 		if (menuimage < 1) {
-			menuimage = gfx.makeimage(12 * gfx.FONT_W, 5 * gfx.FONT_H);
+			menuimage = gfx.makeimage(12 * gfx.FONT_W, TEXT_LINE_SPACING * items.size() + TEXT_OFFSET_Y * 2);
 			auto& mimg = gfx.getimage(menuimage);
 			// background menu
-			// gfx.outline(mimg, 0xffffffff);
+			gfx.fill(mimg, 0xff0000ff);
+			gfx.outline(mimg, 0xffffffff, { 1, 1, mimg.w - 2, mimg.h - 2 });
 			for (int i = 0; i < (int)items.size(); i++)
-				gfx.print(mimg, items[i], 0, i * LINE_SPACING);
+				gfx.print(mimg, items[i], TEXT_OFFSET_X, TEXT_OFFSET_Y + i * TEXT_LINE_SPACING);
 		}
 		// menu sprite
 		auto& mimg = gfx.getimage(menuimage);
 		bgsprite = gfx.makesprite(mimg.w, mimg.h, menuimage);
-		auto& bgspr = gfx.getsprite(bgsprite);
-		bgspr.pos.y = (gfx.screen.h - bgspr.pos.h) / 2;
-		bgspr.pos.x = (gfx.screen.w - bgspr.pos.w + 30) / 2;
+		// auto& bgspr = gfx.getsprite(bgsprite);
 		// hand sprite
 		handsprite = gfx.makesprite(8, 8, pimage);
 		auto& hspr = gfx.getsprite(handsprite);
-		hspr.pos.y = bgspr.pos.y;
-		hspr.pos.x = bgspr.pos.x - 14;
+		hspr.pos.y = TEXT_OFFSET_Y + TEXT_LINE_SPACING * handpos;
 	}
 
 	void update() {
@@ -46,11 +44,8 @@ struct SceneMenu : Scene {
 
 		// update hand position
 		auto& hspr = gfx.getsprite(handsprite);
-		auto& bgspr = gfx.getsprite(bgsprite);
-		hspr.pos.y = bgspr.pos.y + LINE_SPACING * handpos;
+		hspr.pos.y = TEXT_OFFSET_Y + TEXT_LINE_SPACING * handpos;
 	}
 
-	void paint() {
-		gfx.drawscene();
-	}
+	void paint();
 };

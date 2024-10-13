@@ -13,8 +13,25 @@ SceneGame  game;
 SceneMenu  menu;
 
 
+// paint menu scene on top of game scene
+void SceneMenu::paint() {
+	game.paint();
+	gfx.drawscene();
+}
+
+// switch between scenes
+void Scene::switchscene(GAMESCENE scene) {
+	// title -> ingame : load level 1
+	if (currentscene == SCENE_TITLE && scene == SCENE_GAME) {
+		game.level2map(0);
+	}
+	// switch scenes
+	currentscene = scene;
+}
+
+// get currently active scene
 Scene& getscene() {
-	switch (Scene::gamescene) {
+	switch (Scene::currentscene) {
 		case Scene::SCENE_TITLE:    return title;
 		case Scene::SCENE_GAME:     return game;
 		case Scene::SCENE_MENU:     return menu;
@@ -41,14 +58,12 @@ int main(int argc, char* args[]) {
 
 	Scene::tsetimage = sdl.makebmp("assets/tiles.bmp");
 	Scene::pimage = sdl.makebmp("assets/player.bmp");
-	// switchstate(STATE_TITLE);
-	// switchstate(STATE_MENU);
 
 	title.init();
 	game.init();
 	menu.init();
 
-	// Scene::switchscene(SCENE_TITLE);
+	Scene::switchscene(Scene::SCENE_TITLE);
 
 	while (!sdl.quit) {
 		update();
