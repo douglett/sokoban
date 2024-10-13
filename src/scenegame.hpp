@@ -3,7 +3,7 @@
 #include "levels.hpp"
 using namespace std;
 
-struct GameScene : Scene {
+struct SceneGame : Scene {
 	GFX gfx;
 	int tmap = 0, playersprite = 0;
 	int levelno = 0;
@@ -72,7 +72,7 @@ struct GameScene : Scene {
 		else if (dpad.r == DPad::KDOWN)  x =  1;
 		else if (dpad.b == DPad::KDOWN)  level2map(levelno);
 		else if (dpad.a == DPad::KDOWN)  {
-			// switchscene(SCENE_MENU);
+			switchscene(SCENE_MENU);
 			return;
 		}
 
@@ -106,5 +106,9 @@ struct GameScene : Scene {
 			printf("win\n");
 			level2map(levelno + 1);
 		}
+	}
+
+	void paint() {
+		gfx.drawscene();
 	}
 };

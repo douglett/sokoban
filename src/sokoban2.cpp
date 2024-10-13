@@ -1,23 +1,25 @@
 #include <iostream>
 #include "global.hpp"
-#include "titlescene.hpp"
-#include "gamescene.hpp"
+#include "scenetitle.hpp"
+#include "scenegame.hpp"
+#include "scenemenu.hpp"
 using namespace std;
 
 SDLmanager sdl;
 GFX gfx;
 
-TitleScene titlescene;
-GameScene gamescene;
+SceneTitle title;
+SceneGame  game;
+SceneMenu  menu;
 
 
 Scene& getscene() {
 	switch (Scene::gamescene) {
-		case Scene::SCENE_TITLE:    return titlescene;
-		case Scene::SCENE_GAME:     return gamescene;
-		// case Scene::SCENE_MENU:
+		case Scene::SCENE_TITLE:    return title;
+		case Scene::SCENE_GAME:     return game;
+		case Scene::SCENE_MENU:     return menu;
 	}
-	return titlescene;
+	return title;
 }
 
 void update() {
@@ -42,8 +44,9 @@ int main(int argc, char* args[]) {
 	// switchstate(STATE_TITLE);
 	// switchstate(STATE_MENU);
 
-	titlescene.init();
-	gamescene.init();
+	title.init();
+	game.init();
+	menu.init();
 
 	// Scene::switchscene(SCENE_TITLE);
 

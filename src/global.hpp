@@ -8,7 +8,7 @@ struct Scene {
 	enum GAMESCENE {
 		SCENE_TITLE,
 		SCENE_GAME,
-		// SCENE_MENU,
+		SCENE_MENU,
 	};
 
 	static const  int TSIZE = 16;

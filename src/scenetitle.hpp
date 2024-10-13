@@ -3,7 +3,7 @@
 using namespace std;
 
 
-struct TitleScene : Scene {
+struct SceneTitle : Scene {
 	const string title = "Sokoban";
 	GFX gfx;
 	int titleimage = 0, titlesprite = 0, playersprite = 0;
