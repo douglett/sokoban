@@ -8,6 +8,8 @@ struct SceneGame : Scene {
 	int tmap = 0, playersprite = 0;
 	int levelno = 0;
 	vector<int> boxes;
+	// struct BoardState { int x, y, dir; };
+	vector<vector<GFX::Rect>> boardstack;
 
 	void init() {
 		// make sprites and maps
@@ -37,6 +39,7 @@ struct SceneGame : Scene {
 		for (auto& box : boxes)
 			gfx.freesprite(box);
 		boxes = {};
+		boardstack = {};
 
 		int w = 0, h = level.size();
 		for (auto s : level)
@@ -59,12 +62,43 @@ struct SceneGame : Scene {
 				else if (c == '$')  t = 1,  makebox(x, y);
 				else if (c == '@')  t = 1,  pspr.pos.x = x * TSIZE, pspr.pos.y = y * TSIZE;
 				map.data[ y * w + x ] = t;
-				cout << t << ' ';
+				// cout << t << ' ';
 			}
-			cout << endl;
+			// cout << endl;
 		}
 
+		pushstate();
+
 		printf("maps: %d, sprites: %d\n", (int)gfx.tilemaps.size(), (int)gfx.sprites.size());
+	}
+
+	void pushstate() {
+		boardstack.push_back({});
+		auto& state = boardstack.back();
+		// add player state
+		auto& pspr = gfx.getsprite(playersprite);
+		state.push_back({ pspr.pos.x, pspr.pos.y, 1 });
+		// add box state
+		for (int b : boxes) {
+			auto& box = gfx.getsprite(b);
+			state.push_back({ box.pos.x, box.pos.y });
+		}
+	}
+
+	void popstate() {
+		if (boardstack.size() <= 1)  return;
+		boardstack.pop_back();
+		auto& state = boardstack.back();
+		// set player state
+		auto& pspr = gfx.getsprite(playersprite);
+		pspr.pos.x = state.at(0).x;
+		pspr.pos.y = state.at(0).y;
+		// set box state
+		for (int i = 1; i < (int)state.size(); i++) {
+			auto& box = gfx.getsprite(boxes.at(i - 1));
+			box.pos.x = state[i].x;
+			box.pos.y = state[i].y;
+		}
 	}
 
 	void update() {
@@ -74,11 +108,8 @@ struct SceneGame : Scene {
 		else if (dpad.d == DPad::KDOWN)  y =  1;
 		else if (dpad.l == DPad::KDOWN)  x = -1;
 		else if (dpad.r == DPad::KDOWN)  x =  1;
-		else if (dpad.b == DPad::KDOWN)  level2map(levelno);
-		else if (dpad.a == DPad::KDOWN)  {
-			switchscene(SCENE_MENU);
-			return;
-		}
+		else if (dpad.b == DPad::KDOWN)  popstate();
+		else if (dpad.a == DPad::KDOWN)  { switchscene(SCENE_MENU);  return; }
 
 		// move player
 		int tx = x * TSIZE, ty = y * TSIZE;
@@ -91,11 +122,13 @@ struct SceneGame : Scene {
 					box.pos.y += ty;
 					pspr.pos.x += tx;
 					pspr.pos.y += ty;
+					pushstate();
 				}
 			}
 			else {
 				pspr.pos.x += tx;
 				pspr.pos.y += ty;
+				pushstate();
 			}
 		}
 

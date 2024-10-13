@@ -50,7 +50,10 @@ struct SceneMenu : Scene {
 		}
 		else if (dpad.a == DPad::KDOWN)  {
 			switch (handpos) {
-				case 0:  break;
+				case 0:
+					game.popstate();
+					switchscene(SCENE_GAME);
+					break;
 				case 1:
 					game.reset();
 					switchscene(SCENE_GAME);
