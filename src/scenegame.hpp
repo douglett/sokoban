@@ -11,6 +11,10 @@ struct SceneGame : Scene {
 	// struct BoardState { int x, y, dir; };
 	vector<vector<GFX::Rect>> boardstack;
 
+	struct {
+		int dx, dy, box, delta;
+	} anim = {0};
+
 	void init() {
 		// make sprites and maps
 		tmap = gfx.makemap(5, 5, TSIZE, tsetimage);
@@ -90,52 +94,84 @@ struct SceneGame : Scene {
 		boardstack.pop_back();
 		auto& state = boardstack.back();
 		// set player state
-		auto& pspr = gfx.getsprite(playersprite);
+		auto& pspr = gfx.getsprite( playersprite );
 		pspr.pos.x = state.at(0).x;
 		pspr.pos.y = state.at(0).y;
 		// set box state
 		for (int i = 1; i < (int)state.size(); i++) {
-			auto& box = gfx.getsprite(boxes.at(i - 1));
+			auto& box = gfx.getsprite( boxes.at(i - 1) );
 			box.pos.x = state[i].x;
 			box.pos.y = state[i].y;
 		}
 	}
 
+	void paint() {
+		gfx.drawscene();
+	}
+
 	void update() {
+		if (anim.dx || anim.dy)
+			animatemove();
+		else
+			playerinput();
+	}
+
+	void animatemove() {
+		// move player
+		auto& spr = gfx.getsprite( playersprite );
+		spr.pos.x += anim.dx;
+		spr.pos.y += anim.dy;
+		// move pushed box
+		if (anim.box > 0) {
+			auto& box = gfx.getsprite( anim.box );
+			box.pos.x += anim.dx;
+			box.pos.y += anim.dy;
+		}
+		// next
+		if (++anim.delta == TSIZE)
+			anim = {0};
+	}
+
+	void playerinput() {
 		// get player input
 		int x = 0, y = 0;
-		if      (dpad.u == DPad::KDOWN)  y = -1;
-		else if (dpad.d == DPad::KDOWN)  y =  1;
-		else if (dpad.l == DPad::KDOWN)  x = -1;
-		else if (dpad.r == DPad::KDOWN)  x =  1;
-		else if (dpad.b == DPad::KDOWN)  popstate();
-		else if (dpad.a == DPad::KDOWN)  { switchscene(SCENE_MENU);  return; }
+		if      (dpad.u == DPad::KPRESSED)  y = -1;
+		else if (dpad.d == DPad::KPRESSED)  y =  1;
+		else if (dpad.l == DPad::KPRESSED)  x = -1;
+		else if (dpad.r == DPad::KPRESSED)  x =  1;
+		else if (dpad.b == DPad::KDOWN)     popstate();
+		else if (dpad.a == DPad::KDOWN)     { switchscene(SCENE_MENU);  return; }
 
 		// move player
 		int tx = x * TSIZE, ty = y * TSIZE;
 		auto& pspr = gfx.getsprite(playersprite);
-		if ((x || y) && !gfx.collide_map(pspr, tx, ty)) {
-			if (gfx.collide_sprite(pspr, tx, ty)) {
-				auto& box = gfx.getsprite( gfx.collisions_sprite.at(0) );
-				if (!gfx.collide_all(box, tx, ty)) {
-					box.pos.x += tx;
-					box.pos.y += ty;
-					pspr.pos.x += tx;
-					pspr.pos.y += ty;
+		if (( x || y ) && !gfx.collide_map( pspr, tx, ty )) {
+			if (gfx.collide_sprite( pspr, tx, ty )) {
+				int boxid = gfx.collisions_sprite.at(0);
+				auto& box = gfx.getsprite( boxid );
+				if (!gfx.collide_all( box, tx, ty )) {
+					// box.pos.x += tx;
+					// box.pos.y += ty;
+					// pspr.pos.x += tx;
+					// pspr.pos.y += ty;
 					pushstate();
+					anim = { x, y, boxid };
+					animatemove();
 				}
 			}
 			else {
-				pspr.pos.x += tx;
-				pspr.pos.y += ty;
+				// pspr.pos.x += tx;
+				// pspr.pos.y += ty;
 				pushstate();
+				anim = { x, y };
+				animatemove();
 			}
 		}
 
 		// calculate win
 		int onpoint = 0;
 		for (auto b : boxes) {
-			auto& box = gfx.getsprite(b);
+			auto& box = gfx.getsprite( b );
 			if (gfx.mapatpx( gfx.getmap(tmap), box.pos.x, box.pos.y ) == 2)
 				onpoint++;
 		}
@@ -143,9 +179,5 @@ struct SceneGame : Scene {
 			printf("win\n");
 			level2map(levelno + 1);
 		}
-	}
-
-	void paint() {
-		gfx.drawscene();
 	}
 };
