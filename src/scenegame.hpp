@@ -6,6 +6,7 @@ using namespace std;
 struct SceneGame : Scene {
 	GFX gfx;
 	int tmap = 0, playersprite = 0;
+	int coverimage = 0, coversprite = 0;
 	int levelno = 0;
 	vector<int> boxes;
 	// struct BoardState { int x, y, dir; };
@@ -17,11 +18,18 @@ struct SceneGame : Scene {
 
 	void init() {
 		// make sprites and maps
-		tmap = gfx.makemap(5, 5, TSIZE, tsetimage);
-		playersprite = gfx.makesprite(TSIZE, TSIZE, pimage);
-		gfx.getsprite(playersprite).src.x = TSIZE * 2;
-		// reload map data
-		// level2map(levelno);
+		tmap = gfx.makemap( 5, 5, TSIZE, tsetimage );
+		playersprite = gfx.makesprite( TSIZE, TSIZE, pimage );
+
+		// overlay box
+		coverimage = gfx.makeimage( gfx.screen.w, gfx.screen.h );
+		auto& cimg = gfx.getimage( coverimage );
+		gfx.fill( cimg, 0xff0000ff );
+		coversprite = gfx.makesprite( cimg.w, cimg.h, coverimage );
+		auto& cspr = gfx.getsprite( coversprite );
+		cspr.hit = cspr.hurt = {0};
+		cspr.z = 1000;
+		cspr.visible = false;
 	}
 
 	void makebox(int tx, int ty) {
@@ -54,6 +62,7 @@ struct SceneGame : Scene {
 		map.data.resize(w * h, 0);
 
 		auto& pspr = gfx.getsprite(playersprite);
+		pspr.src.x = TSIZE * 2;
 
 		for (int y = 0; y < map.th; y++) {
 			for (int x = 0; x < map.tw; x++) {

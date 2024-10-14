@@ -109,19 +109,22 @@ struct GFX {
 				|| r1.y + r1.h - 1 < r2.y 
 				|| r1.y > r2.y + r2.h - 1 );
 	}
-	int collide_sprite(const Rect& rect) {
-		collisions_sprite = {};
-		for (const auto& [i, sprite] : sprites)
-			if (collide_rect(rect, sprite.pos))
-				collisions_sprite.push_back(i);
-		return collisions_sprite.size();
-	}
+	// int collide_sprite(const Rect& rect) {
+	// 	collisions_sprite = {};
+	// 	for (const auto& [i, sprite] : sprites)
+	// 		if (collide_rect(rect, sprite.hit))
+	// 			collisions_sprite.push_back(i);
+	// 	return collisions_sprite.size();
+	// }
 	int collide_sprite(const Sprite& spr, int xoff=0, int yoff=0) {
 		collisions_sprite = {};
-		Rect nextpos = { spr.pos.x + xoff, spr.pos.y + yoff, spr.pos.w, spr.pos.h };
-		for (const auto& [i, sprite] : sprites)
-			if (&spr != &sprite && collide_rect(nextpos, sprite.pos))
+		// Rect nextpos = { spr.pos.x + xoff, spr.pos.y + yoff, spr.pos.w, spr.pos.h };
+		Rect nextpos = { spr.pos.x + spr.hit.x + xoff, spr.pos.y + spr.hit.y + yoff, spr.hit.w, spr.hit.h };
+		for (const auto& [i, sprite] : sprites) {
+			Rect hit = { sprite.pos.x + sprite.hit.x, sprite.pos.y + sprite.hit.y, sprite.hit.w, sprite.hit.h };
+			if (&spr != &sprite && collide_rect(nextpos, hit))
 				collisions_sprite.push_back(i);
+		}
 		return collisions_sprite.size();
 	}
 	inline int mapat(const Tilemap& tmap, int tx, int ty) {
