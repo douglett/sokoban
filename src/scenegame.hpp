@@ -5,31 +5,30 @@ using namespace std;
 
 struct SceneGame : Scene {
 	GFX gfx;
-	int tmap = 0, playersprite = 0;
-	int coverimage = 0, coversprite = 0;
+	int tmap = 0, playerspr = 0;
+	int overlayimg = 0, overlayspr = 0;
 	int levelno = 0;
 	vector<int> boxes;
-	// struct BoardState { int x, y, dir; };
 	vector<vector<GFX::Rect>> boardstack;
 
-	struct {
-		int dx, dy, box, delta;
-	} anim = {0};
+	// animations
+	struct { int dx, dy, box, delta; } walkanim = {0};
+	struct { int dir, delta; } wipeanim = {0};
 
 	void init() {
 		// make sprites and maps
 		tmap = gfx.makemap( 5, 5, TSIZE, tsetimage );
-		playersprite = gfx.makesprite( TSIZE, TSIZE, pimage );
+		playerspr = gfx.makesprite( TSIZE, TSIZE, pimage );
 
 		// overlay box
-		coverimage = gfx.makeimage( gfx.screen.w, gfx.screen.h );
-		auto& cimg = gfx.getimage( coverimage );
-		gfx.fill( cimg, 0xff0000ff );
-		coversprite = gfx.makesprite( cimg.w, cimg.h, coverimage );
-		auto& cspr = gfx.getsprite( coversprite );
-		cspr.hit = cspr.hurt = {0};
-		cspr.z = 1000;
-		cspr.visible = false;
+		overlayimg = gfx.makeimage( gfx.screen.w, gfx.screen.h );
+		auto& cimg = gfx.getimage( overlayimg );
+		gfx.fill( cimg, 0xff000000 );
+		overlayspr = gfx.makesprite( cimg.w, cimg.h, overlayimg );
+		auto& ospr = gfx.getsprite( overlayspr );
+		ospr.hit = ospr.hurt = {0};
+		ospr.z = 1000;
+		ospr.visible = false;
 	}
 
 	void makebox(int tx, int ty) {
@@ -45,7 +44,7 @@ struct SceneGame : Scene {
 	}
 
 	void level2map(int _levelno) {
-		auto& level = MINICOSMOS.at(_levelno);
+		auto& level = MINICOSMOS.at( _levelno );
 		levelno = _levelno;
 
 		for (auto& box : boxes)
@@ -56,12 +55,12 @@ struct SceneGame : Scene {
 		int w = 0, h = level.size();
 		for (auto s : level)
 			if ((int)s.length() > w) w = s.length();
-		auto& map = gfx.getmap(tmap);
+		auto& map = gfx.getmap( tmap );
 		map.tw = w;
 		map.th = h;
 		map.data.resize(w * h, 0);
 
-		auto& pspr = gfx.getsprite(playersprite);
+		auto& pspr = gfx.getsprite( playerspr );
 		pspr.src.x = TSIZE * 2;
 
 		for (int y = 0; y < map.th; y++) {
@@ -89,11 +88,11 @@ struct SceneGame : Scene {
 		boardstack.push_back({});
 		auto& state = boardstack.back();
 		// add player state
-		auto& pspr = gfx.getsprite(playersprite);
+		auto& pspr = gfx.getsprite( playerspr );
 		state.push_back({ pspr.pos.x, pspr.pos.y, 1 });
 		// add box state
 		for (int b : boxes) {
-			auto& box = gfx.getsprite(b);
+			auto& box = gfx.getsprite( b );
 			state.push_back({ box.pos.x, box.pos.y });
 		}
 	}
@@ -103,7 +102,7 @@ struct SceneGame : Scene {
 		boardstack.pop_back();
 		auto& state = boardstack.back();
 		// set player state
-		auto& pspr = gfx.getsprite( playersprite );
+		auto& pspr = gfx.getsprite( playerspr );
 		pspr.pos.x = state.at(0).x;
 		pspr.pos.y = state.at(0).y;
 		// set box state
@@ -119,55 +118,14 @@ struct SceneGame : Scene {
 	}
 
 	void update() {
-		if (anim.dx || anim.dy)
+		if (walkanim.dx || walkanim.dy)
 			animatemove();
+		else if (wipeanim.dir)
+			animatewipe();
 		else if (checkwin())
 			;
 		else
 			playerinput();
-	}
-
-	int checkwin() {
-		// calculate boxes in place
-		int onpoint = 0;
-		for (auto b : boxes) {
-			auto& box = gfx.getsprite( b );
-			if (gfx.mapatpx( gfx.getmap(tmap), box.pos.x, box.pos.y ) == 2)
-				onpoint++;
-		}
-		// check win
-		if (onpoint == (int)boxes.size()) {
-			printf("win\n");
-			level2map(levelno + 1);
-			return 1;
-		}
-		return 0;
-	}
-
-	void animatemove() {
-		static const int WALKSPEED = 1;
-		// move player
-		auto& spr = gfx.getsprite( playersprite );
-		spr.pos.x += anim.dx * WALKSPEED;
-		spr.pos.y += anim.dy * WALKSPEED;
-		// set animation
-		int dir = 0;
-		if      (anim.dy == -1)  dir = 0;
-		else if (anim.dx ==  1)  dir = 1;
-		else if (anim.dy ==  1)  dir = 2;
-		else if (anim.dx == -1)  dir = 3;
-		if (anim.delta < TSIZE / 2)  dir += 4;
-		spr.src.x = dir * TSIZE;
-		// move pushed box
-		if (anim.box > 0) {
-			auto& box = gfx.getsprite( anim.box );
-			box.pos.x += anim.dx * WALKSPEED;
-			box.pos.y += anim.dy * WALKSPEED;
-		}
-		// next
-		anim.delta += WALKSPEED;
-		if (anim.delta == TSIZE)
-			anim = {0};
 	}
 
 	void playerinput() {
@@ -182,7 +140,7 @@ struct SceneGame : Scene {
 
 		// move player
 		int tx = x * TSIZE, ty = y * TSIZE;
-		auto& pspr = gfx.getsprite(playersprite);
+		auto& pspr = gfx.getsprite(playerspr);
 		if (( x || y ) && !gfx.collide_map( pspr, tx, ty )) {
 			if (gfx.collide_sprite( pspr, tx, ty )) {
 				int boxid = gfx.collisions_sprite.at(0);
@@ -193,7 +151,7 @@ struct SceneGame : Scene {
 					// pspr.pos.x += tx;
 					// pspr.pos.y += ty;
 					pushstate();
-					anim = { x, y, boxid };
+					walkanim = { x, y, boxid };
 					animatemove();
 				}
 			}
@@ -201,9 +159,81 @@ struct SceneGame : Scene {
 				// pspr.pos.x += tx;
 				// pspr.pos.y += ty;
 				pushstate();
-				anim = { x, y };
+				walkanim = { x, y };
 				animatemove();
 			}
+		}
+	}
+
+	int checkwin() {
+		// calculate boxes in place
+		int onpoint = 0;
+		for (auto b : boxes) {
+			auto& box = gfx.getsprite( b );
+			if (gfx.mapatpx( gfx.getmap(tmap), box.pos.x, box.pos.y ) == 2)
+				onpoint++;
+		}
+		// check win
+		if (onpoint == (int)boxes.size()) {
+			printf("win\n");
+			// level2map(levelno + 1);
+			wipeanim = { 1 };
+			return 1;
+		}
+		return 0;
+	}
+
+	void animatemove() {
+		static const int WALKSPEED = 1;
+		// move player
+		auto& spr = gfx.getsprite( playerspr );
+		spr.pos.x += walkanim.dx * WALKSPEED;
+		spr.pos.y += walkanim.dy * WALKSPEED;
+		// set animation
+		int dir = 0;
+		if      (walkanim.dy == -1)  dir = 0;
+		else if (walkanim.dx ==  1)  dir = 1;
+		else if (walkanim.dy ==  1)  dir = 2;
+		else if (walkanim.dx == -1)  dir = 3;
+		if (walkanim.delta < TSIZE / 2)  dir += 4;
+		spr.src.x = dir * TSIZE;
+		// move pushed box
+		if (walkanim.box > 0) {
+			auto& box = gfx.getsprite( walkanim.box );
+			box.pos.x += walkanim.dx * WALKSPEED;
+			box.pos.y += walkanim.dy * WALKSPEED;
+		}
+		// next
+		walkanim.delta += WALKSPEED;
+		if (walkanim.delta >= TSIZE)
+			walkanim = {0};
+	}
+
+	void animatewipe() {
+		static const float WIPESTEPS = 50;
+		wipeanim.delta++;
+		auto& ospr = gfx.getsprite( overlayspr );
+		ospr.visible = true;
+		// wipe in
+		if (wipeanim.dir == 1) {
+			ospr.pos.x = -ospr.pos.w + (wipeanim.delta / WIPESTEPS) * ospr.pos.w;
+			if (wipeanim.delta >= WIPESTEPS) {
+				wipeanim = { -1 };
+				level2map(levelno + 1);
+			}
+		}
+		// wipe out
+		else if (wipeanim.dir == -1) {
+			ospr.pos.x = (wipeanim.delta / WIPESTEPS) * ospr.pos.w;
+			if (wipeanim.delta >= WIPESTEPS) {
+				ospr.visible = false;
+				wipeanim = { 0 };
+			}
+		}
+		// just in case
+		else {
+			ospr.visible = false;
+			wipeanim = { 0 };
 		}
 	}
 };
