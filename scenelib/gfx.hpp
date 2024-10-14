@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <bitset>
+#include <algorithm>
 using namespace std;
 
 struct GFX {
@@ -10,14 +11,15 @@ struct GFX {
 	struct Rectf { double x, y, w, h; };
 	struct Image { int w, h; vector<uint32_t> data; };
 	struct Sprite {
-		int image, visible;
+		int image, visible, z;
 		Rect pos, src, hit, hurt;
 	};
 	struct Tilemap {
-		int x, y, image, visible;
+		int x, y, image, visible, z;
 		int tw, th, tsize;
 		vector<int> data;
 	};
+	struct Drawable { Tilemap* tmap; Sprite* sprite; int z; };
 
 	// global data
 	static const  uint32_t             FONT_DATA[];
@@ -244,31 +246,49 @@ struct GFX {
 
 	// draw scene
 	void drawscene() {
-		// drap maps
-		for (auto& [i, tmap] : tilemaps) {
-			if (!tmap.visible || tmap.image < 1 || (int)tmap.data.size() != tmap.tw * tmap.th)
-				continue;
-			Rect src = { 0, 0, tmap.tsize, tmap.tsize };
-			for (int y = 0; y < tmap.th; y++)
-			for (int x = 0; x < tmap.tw; x++) {
-				src.x = abs( tmap.data[ y * tmap.tw + x ] ) * tmap.tsize;
-				blit( getimage(tmap.image), sceneoffset.x + tmap.x + x * tmap.tsize, sceneoffset.y + tmap.y + y * tmap.tsize, src );
-				if (flag_hit && tmap.data[ y * tmap.tw + x ] < 0)
-					outline( 0xffff7700, { sceneoffset.x + tmap.x + x * tmap.tsize, sceneoffset.y + tmap.y + y * tmap.tsize, tmap.tsize, tmap.tsize } );
+		// add drawable items to z-index ordered list and sort
+		vector<Drawable> draworder;
+		for (auto& [i, tmap] : tilemaps)
+			draworder.push_back({ &tmap, NULL, tmap.z });
+		for (auto& [i, sprite] : sprites)
+			draworder.push_back({ NULL, &sprite, sprite.z });
+		sort( draworder.begin(), draworder.end(), compareDrawable );
+
+		// draw in z-index order
+		for (auto& drawable : draworder) {
+			// draw maps
+			if (drawable.tmap != NULL) {
+				auto& tmap = *drawable.tmap;
+				if (!tmap.visible || tmap.image < 1 || (int)tmap.data.size() != tmap.tw * tmap.th)
+					continue;
+				Rect src = { 0, 0, tmap.tsize, tmap.tsize };
+				for (int y = 0; y < tmap.th; y++)
+				for (int x = 0; x < tmap.tw; x++) {
+					src.x = abs( tmap.data[ y * tmap.tw + x ] ) * tmap.tsize;
+					blit( getimage(tmap.image), sceneoffset.x + tmap.x + x * tmap.tsize, sceneoffset.y + tmap.y + y * tmap.tsize, src );
+					if (flag_hit && tmap.data[ y * tmap.tw + x ] < 0)
+						outline( 0xffff7700, { sceneoffset.x + tmap.x + x * tmap.tsize, sceneoffset.y + tmap.y + y * tmap.tsize, tmap.tsize, tmap.tsize } );
+				}
+			}
+			// draw sprites
+			else if (drawable.sprite != NULL) {
+				auto& sprite = *drawable.sprite;
+				if (!sprite.visible || sprite.image < 1)
+					continue;
+				sprite.src.w = sprite.pos.w;
+				sprite.src.h = sprite.pos.h;
+				blit( getimage(sprite.image), sceneoffset.x + sprite.pos.x, sceneoffset.y + sprite.pos.y, sprite.src );
+				if (flag_hit)
+					outline( 0xffff0000, { sceneoffset.x + sprite.pos.x + sprite.hit.x, sceneoffset.y + sprite.pos.y + sprite.hit.y, sprite.hit.w, sprite.hit.h } );
+				if (flag_hurt)
+					outline( 0xff00ff00, { sceneoffset.x + sprite.pos.x + sprite.hurt.x, sceneoffset.y + sprite.pos.y + sprite.hurt.y, sprite.hurt.w, sprite.hurt.h } );
 			}
 		}
-		// draw sprites
-		for (auto& [i, sprite] : sprites) {
-			if (!sprite.visible || sprite.image < 1)
-				continue;
-			sprite.src.w = sprite.pos.w;
-			sprite.src.h = sprite.pos.h;
-			blit( getimage(sprite.image), sceneoffset.x + sprite.pos.x, sceneoffset.y + sprite.pos.y, sprite.src );
-			if (flag_hit)
-				outline( 0xffff0000, { sceneoffset.x + sprite.pos.x + sprite.hit.x, sceneoffset.y + sprite.pos.y + sprite.hit.y, sprite.hit.w, sprite.hit.h } );
-			if (flag_hurt)
-				outline( 0xff00ff00, { sceneoffset.x + sprite.pos.x + sprite.hurt.x, sceneoffset.y + sprite.pos.y + sprite.hurt.y, sprite.hurt.w, sprite.hurt.h } );
-		}
+	}
+
+	// draw order sorting function
+	static bool compareDrawable(const Drawable& l, const Drawable& r) {
+		return l.z < r.z;
 	}
 };
 
