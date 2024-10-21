@@ -26,7 +26,7 @@ struct SceneGame : Scene {
 		gfx.fill( cimg, 0xff000000 );
 		overlayspr = gfx.makesprite( cimg.w, cimg.h, overlayimg );
 		auto& ospr = gfx.getsprite( overlayspr );
-		ospr.hit = ospr.hurt = {0};
+		ospr.hit = ospr.hurt = { 0 };
 		ospr.z = 1000;
 		ospr.visible = false;
 	}
@@ -98,8 +98,8 @@ struct SceneGame : Scene {
 	}
 
 	void popstate() {
-		if (boardstack.size() <= 1)  return;
-		boardstack.pop_back();
+		if (boardstack.size() > 1)
+			boardstack.pop_back();
 		auto& state = boardstack.back();
 		// set player state
 		auto& pspr = gfx.getsprite( playerspr );
@@ -150,7 +150,7 @@ struct SceneGame : Scene {
 					// box.pos.y += ty;
 					// pspr.pos.x += tx;
 					// pspr.pos.y += ty;
-					pushstate();
+					// pushstate();
 					walkanim = { x, y, boxid };
 					animatemove();
 				}
@@ -158,7 +158,7 @@ struct SceneGame : Scene {
 			else {
 				// pspr.pos.x += tx;
 				// pspr.pos.y += ty;
-				pushstate();
+				// pushstate();
 				walkanim = { x, y };
 				animatemove();
 			}
@@ -205,8 +205,10 @@ struct SceneGame : Scene {
 		}
 		// next
 		walkanim.delta += WALKSPEED;
-		if (walkanim.delta >= TSIZE)
+		if (walkanim.delta >= TSIZE) {
+			pushstate();
 			walkanim = {0};
+		}
 	}
 
 	void animatewipe() {

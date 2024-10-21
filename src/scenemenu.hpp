@@ -5,7 +5,7 @@ using namespace std;
 
 struct SceneMenu : Scene {
 	const vector<string> items = {
-		"back (b)",
+		string("back (") + DPad::BUTTON_B + ")",
 		"reset",
 		"quit",
 	};

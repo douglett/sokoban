@@ -9,6 +9,7 @@ struct DPad {
 		KPRESSED = 1,
 		KDOWN = 2,
 	};
+	static const char BUTTON_A = 'Z', BUTTON_B = 'X';
 	int u=0, d=0, l=0, r=0, a=0, b=0;
 	int xaxis=0, yaxis=0;
 	char str[100] = {0};
