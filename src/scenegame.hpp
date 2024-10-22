@@ -1,6 +1,6 @@
 #pragma once
 #include "global.hpp"
-#include "levels.hpp"
+#include "levels_skinner.hpp"
 using namespace std;
 
 struct SceneGame : Scene {
@@ -44,7 +44,7 @@ struct SceneGame : Scene {
 	}
 
 	void level2map(int _levelno) {
-		auto& level = MINICOSMOS.at( _levelno );
+		auto& level = LEVELS_SKINNER.at( _levelno );
 		levelno = _levelno;
 
 		for (auto& box : boxes)
@@ -72,6 +72,7 @@ struct SceneGame : Scene {
 				else if (c == '#')  t = -3;
 				else if (c == '.')  t = 2;
 				else if (c == '$')  t = 1,  makebox(x, y);
+				else if (c == '*')  t = 2,  makebox(x, y);
 				else if (c == '@')  t = 1,  pspr.pos.x = x * TSIZE, pspr.pos.y = y * TSIZE;
 				map.data[ y * w + x ] = t;
 				// cout << t << ' ';
