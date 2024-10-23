@@ -15,8 +15,9 @@ struct GFX {
 		Rect pos, src, hit, hurt;
 	};
 	struct Tilemap {
-		int x, y, image, visible, z;
+		int image, visible, z;
 		int tw, th, tsize;
+		Rect pos;
 		vector<int> data;
 	};
 	struct Drawable { Tilemap* tmap; Sprite* sprite; int z; };
@@ -279,9 +280,9 @@ struct GFX::Scene : GFX {
 				for (int y = 0; y < tmap.th; y++)
 				for (int x = 0; x < tmap.tw; x++) {
 					src.x = abs( tmap.data[ y * tmap.tw + x ] ) * tmap.tsize;
-					blit( getimage(tmap.image), sceneoffset.x + tmap.x + x * tmap.tsize, sceneoffset.y + tmap.y + y * tmap.tsize, src );
+					blit( getimage(tmap.image), sceneoffset.x + tmap.pos.x + x * tmap.tsize, sceneoffset.y + tmap.pos.y + y * tmap.tsize, src );
 					if (flag_hit && tmap.data[ y * tmap.tw + x ] < 0)
-						outline( 0xffff7700, { sceneoffset.x + tmap.x + x * tmap.tsize, sceneoffset.y + tmap.y + y * tmap.tsize, tmap.tsize, tmap.tsize } );
+						outline( 0xffff7700, { sceneoffset.x + tmap.pos.x + x * tmap.tsize, sceneoffset.y + tmap.pos.y + y * tmap.tsize, tmap.tsize, tmap.tsize } );
 				}
 			}
 			// draw sprites
