@@ -14,7 +14,7 @@ struct SceneGame : Scene {
 	vector<vector<GFX::Rect>> boardstack;
 
 	// animations
-	struct { int dx, dy, box, delta; } walkanim = {0};
+	struct { int dir, dx, dy, box, delta; } walkanim = {0};
 
 	void init() {
 		// make sprites and maps
@@ -130,30 +130,37 @@ struct SceneGame : Scene {
 
 	void playerinput() {
 		// get player input
-		int x = 0, y = 0;
-		if      (dpad.u == DPad::KPRESSED)  y = -1;
-		else if (dpad.d == DPad::KPRESSED)  y =  1;
-		else if (dpad.l == DPad::KPRESSED)  x = -1;
-		else if (dpad.r == DPad::KPRESSED)  x =  1;
+		int dir = -1, x = 0, y = 0;
+		if      (dpad.u == DPad::KPRESSED)  dir = 0, y = -1;
+		else if (dpad.r == DPad::KPRESSED)  dir = 1, x =  1;
+		else if (dpad.d == DPad::KPRESSED)  dir = 2, y =  1;
+		else if (dpad.l == DPad::KPRESSED)  dir = 3, x = -1;
 		else if (dpad.b == DPad::KDOWN)     popstate();
 		else if (dpad.a == DPad::KDOWN)     { switchscene(SCENE_MENU);  return; }
 
 		// move player
 		int tx = x * TSIZE, ty = y * TSIZE;
 		auto& pspr = gfx.getsprite(playerspr);
-		if (( x || y ) && !gfx.collide_map( pspr, tx, ty )) {
-			if (gfx.collide_sprite( pspr, tx, ty )) {
-				int boxid = gfx.collisions_sprite.at(0);
-				auto& box = gfx.getsprite( boxid );
-				if (!gfx.collide_all( box, tx, ty )) {
-					walkanim = { x, y, boxid };
-					animatemove();
-				}
-			}
-			else {
-				walkanim = { x, y };
+		// walk into box
+		if (dir > -1 && gfx.collide_sprite( pspr, tx, ty )) {
+			int boxid = gfx.collisions_sprite.at(0);
+			auto& box = gfx.getsprite( boxid );
+			if (!gfx.collide_all( box, tx, ty )) {
+				walkanim = { dir, x, y, boxid };
 				animatemove();
 			}
+			else {
+				pspr.src.x = dir * TSIZE;
+			}
+		}
+		// walk into space
+		else if (dir > -1 && !gfx.collide_map( pspr, tx, ty )) {
+			walkanim = { dir, x, y };
+			animatemove();
+		}
+		// neither
+		else if (dir > -1) {
+			pspr.src.x = dir * TSIZE;
 		}
 	}
 
@@ -182,13 +189,7 @@ struct SceneGame : Scene {
 		spr.pos.x += walkanim.dx * WALKSPEED;
 		spr.pos.y += walkanim.dy * WALKSPEED;
 		// set animation
-		int dir = 0;
-		if      (walkanim.dy == -1)  dir = 0;
-		else if (walkanim.dx ==  1)  dir = 1;
-		else if (walkanim.dy ==  1)  dir = 2;
-		else if (walkanim.dx == -1)  dir = 3;
-		if (walkanim.delta < TSIZE / 2)  dir += 4;
-		spr.src.x = dir * TSIZE;
+		spr.src.x = ( walkanim.dir + ( walkanim.delta < TSIZE / 2 ? 4 : 0 ) ) * TSIZE;
 		// move pushed box
 		if (walkanim.box > 0) {
 			auto& box = gfx.getsprite( walkanim.box );
