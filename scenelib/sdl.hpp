@@ -8,7 +8,7 @@ using namespace std;
 
 struct SDLmanager {
 	const string gamename = "My Game";
-	const int SCREEN_WIDTH  = 534;
+	const int SCREEN_WIDTH  = 640;
 	const int SCREEN_HEIGHT = 480;
 	const uint32_t TRANSPARENT_COLOR = 0xffff00ff;
 	// const int SCREEN_SCALE  = 1;

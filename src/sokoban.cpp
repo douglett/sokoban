@@ -6,7 +6,7 @@
 #include "scene_wipe.hpp"
 using namespace std;
 
-SDLmanager sdl;
+SDLmanager sdl( "Sokoban", 534, 480 );
 GFX gfx;
 
 SceneTitle  title;

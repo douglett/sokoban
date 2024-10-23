@@ -11,5 +11,11 @@ $(OUT): $(SRC) $(HEAD)
 		-I. \
 		-lmingw32 -lSDL2main -lSDL2 -mwindows -mconsole
 
+release: $(SRC) $(HEAD)
+	g++ -std=c++17 -Wall -Ofast -o $(OUT) $(SRC) \
+		-IC:/bin/devlib/SDL2/include/SDL2 -LC:/bin/devlib/SDL2/lib \
+		-I. \
+		-lmingw32 -lSDL2main -lSDL2 -mwindows
+
 run: $(OUT)
 	./$(OUT)
