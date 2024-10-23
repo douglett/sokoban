@@ -37,9 +37,10 @@ struct SceneGame : Scene {
 	}
 
 	void level2map(int _levelno) {
-		auto& level = LEVELS_SKINNER.at( _levelno );
-		// auto& level = LEVELS_MINICOSMOS.at( _levelno );
 		levelno = _levelno;
+		if (levelno >= (int)LEVELS_SKINNER.size())  levelno = 0;  // loop-to-start
+		// auto& level = LEVELS_MINICOSMOS.at( levelno );
+		auto& level = LEVELS_SKINNER.at( levelno );
 
 		for (auto& box : boxes)
 			gfx.freesprite(box);
@@ -75,6 +76,7 @@ struct SceneGame : Scene {
 		}
 
 		pushstate();
+		centeronplayer();
 
 		printf("maps: %d, sprites: %d\n", (int)gfx.tilemaps.size(), (int)gfx.sprites.size());
 	}
@@ -122,6 +124,8 @@ struct SceneGame : Scene {
 			;
 		else
 			playerinput();
+		// center camera
+		centeronplayer();
 	}
 
 	void playerinput() {
@@ -203,5 +207,29 @@ struct SceneGame : Scene {
 		wipe.update();
 		if (wipe.midpoint())
 			level2map(levelno + 1);
+	}
+
+	void centeronplayer() {
+		auto& map = gfx.getmap( tmap );
+		auto& pspr = gfx.getsprite( playerspr );
+		const int MARGIN = 4;
+
+		// center x
+		if (map.tw * TSIZE < gfx.screen.w)
+			gfx.sceneoffset.x = (gfx.screen.w - map.tw * TSIZE) / 2;
+		else {
+			gfx.sceneoffset.x = ((gfx.screen.w - pspr.pos.w) / 2) - pspr.pos.x;
+			gfx.sceneoffset.x = min( gfx.sceneoffset.x, MARGIN );
+			gfx.sceneoffset.x = max( gfx.sceneoffset.x, -(map.tw * TSIZE - gfx.screen.w + MARGIN) );
+		}
+
+		// center y
+		if (map.th * TSIZE < gfx.screen.h)
+			gfx.sceneoffset.y = (gfx.screen.h - map.th * TSIZE) / 2;
+		else {
+			gfx.sceneoffset.y = ((gfx.screen.h - pspr.pos.h) / 2) - pspr.pos.y;
+			gfx.sceneoffset.y = min( gfx.sceneoffset.y, MARGIN );
+			gfx.sceneoffset.y = max( gfx.sceneoffset.y, -(map.th * TSIZE - gfx.screen.h + MARGIN) );
+		}
 	}
 };
