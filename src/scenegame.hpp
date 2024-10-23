@@ -6,7 +6,7 @@ using namespace std;
 struct SceneGame : Scene {
 	GFX::Scene gfx;
 	int tmap = 0, playerspr = 0;
-	int overlayimg = 0, overlayspr = 0;
+	int overlayspr = 0;
 	int levelno = 0;
 	vector<int> boxes;
 	vector<vector<GFX::Rect>> boardstack;
@@ -21,11 +21,9 @@ struct SceneGame : Scene {
 		playerspr = gfx.makesprite( TSIZE, TSIZE, pimage );
 
 		// overlay box
-		overlayimg = gfx.makeimage( gfx.screen.w, gfx.screen.h );
-		auto& cimg = gfx.getimage( overlayimg );
-		gfx.fill( cimg, 0xff000000 );
-		overlayspr = gfx.makesprite( cimg.w, cimg.h, overlayimg );
+		overlayspr = gfx.makespriteimage( gfx.screen.w, gfx.screen.h );
 		auto& ospr = gfx.getsprite( overlayspr );
+		gfx.fill( gfx.getimage(ospr.image), 0xff000000 );
 		ospr.hit = ospr.hurt = { 0 };
 		ospr.z = 1000;
 		ospr.visible = false;

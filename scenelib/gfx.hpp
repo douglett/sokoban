@@ -181,6 +181,11 @@ struct GFX::Scene : GFX {
 		spr.visible = true;
 		return ptr;
 	}
+	int makespriteimage(int w, int h) {
+		int img = makeimage(w, h);
+		int spr = makesprite(w, h, img);
+		return spr;
+	}
 	int makemap(int tw, int th, int tsize, int image) {
 		int ptr = pcounter++;
 		auto& tmap = tilemaps[ptr] = {0};
@@ -194,9 +199,10 @@ struct GFX::Scene : GFX {
 	}
 
 	// free
-	void freeimage(int ptr)  { images.erase(ptr);  imagesgl.erase(ptr); }
-	void freesprite(int ptr) { sprites.erase(ptr); }
-	void freemap(int ptr)    { tilemaps.erase(ptr); }
+	void freeimage(int ptr)       { images.erase(ptr);  imagesgl.erase(ptr); }
+	void freesprite(int ptr)      { sprites.erase(ptr); }
+	void freespriteimage(int ptr) { freeimage( getsprite(ptr).image ); sprites.erase(ptr); }
+	void freemap(int ptr)         { tilemaps.erase(ptr); }
 
 	// get (TODO: null/free error checking)
 	Image&   getimage(int ptr)  { return imagesgl.count(ptr) ? imagesgl.at(ptr) : images.at(ptr); }
