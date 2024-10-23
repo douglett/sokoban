@@ -5,7 +5,8 @@ using namespace std;
 
 struct SceneTitle : Scene {
 	const string title = "Sokoban";
-	GFX gfx;
+
+	GFX::Scene gfx;
 	int titleimage = 0, titlesprite = 0, playersprite = 0;
 	int dir = 2, delta = 0;
 

@@ -10,7 +10,8 @@ struct SceneMenu : Scene {
 		"quit",
 	};
 	const int TEXT_LINE_SPACING = 12, TEXT_OFFSET_X = 12, TEXT_OFFSET_Y = 4;
-	GFX gfx;
+
+	GFX::Scene gfx;
 	int menuimage = 0, bgsprite = 0, handsprite = 0;
 	int handpos = 0;
 

@@ -20,6 +20,7 @@ struct GFX {
 		vector<int> data;
 	};
 	struct Drawable { Tilemap* tmap; Sprite* sprite; int z; };
+	struct Scene;
 
 	// global data
 	static const  uint32_t             FONT_DATA[];
@@ -27,13 +28,6 @@ struct GFX {
 	static inline Image                screen = {0}, fontface = {0};
 	static inline map<int, Image>      imagesgl;
 	static inline int                  pcounter = 1, flag_hit = 0, flag_hurt = 0;
-
-	// instance data
-	map<int, Image>      images;
-	map<int, Sprite>     sprites;
-	map<int, Tilemap>    tilemaps;
-	vector<int>          collisions_map, collisions_sprite;
-	Rect                 sceneoffset = { 0, 0 };
 
 	// construct and initialize main screen
 	static void init(int w, int h) {
@@ -54,18 +48,125 @@ struct GFX {
 		}
 	}
 
-	// make
-	int makeimage(int w, int h) {
+	// make global
+	static int makeimagegl(int w, int h) {
 		int ptr = pcounter++;
-		auto& img = images[ptr] = {0};
+		auto& img = imagesgl[ptr] = {0};
 		img.w = w;
 		img.h = h;
 		img.data.resize(w * h, 0xff000000);
 		return ptr;
 	}
-	static int makeimagegl(int w, int h) {
+	// free global
+	static void freeimagegl(int ptr)  { imagesgl.erase(ptr); }
+	// get global
+	static Image& getimagegl(int ptr)  { return imagesgl.at(ptr); }
+
+	// collisions
+	static inline int collide_rect(const Rect& r1, const Rect& r2) {
+		return !( r1.x + r1.w - 1 < r2.x 
+				|| r1.x > r2.x + r2.w - 1
+				|| r1.y + r1.h - 1 < r2.y 
+				|| r1.y > r2.y + r2.h - 1 );
+	}
+
+	// single pixel
+	static inline void px(int col, int dx, int dy) {
+		px(screen, col, dx, dy);
+	}
+	static inline void px(Image& dst, int col, int dx, int dy) {
+		if (dx >= 0 && dx < dst.w && dy >= 0 && dy < dst.h)
+			dst.data[ dy * dst.w + dx ] = col;
+	}
+
+	// fill box with solid color
+	static void fill(uint32_t col) {
+		fill(screen, col, { 0, 0, screen.w, screen.h });
+	}
+	static void fill(uint32_t col, Rect drect) {
+		fill(screen, col, drect);
+	}
+	static void fill(Image& dst, uint32_t col) {
+		fill(dst, col, { 0, 0, dst.w, dst.h });
+	}
+	static void fill(Image& dst, uint32_t col, Rect drect) {
+		for (int y = 0; y < drect.h; y++)
+			if (drect.y + y >= 0 && drect.y + y < dst.h)
+				for (int x = 0; x < drect.w; x++)
+					if (drect.x + x >= 0 && drect.x + x < dst.w)
+						dst.data[ (drect.y + y) * dst.w + (drect.x + x) ] = col;
+	}
+
+	// outline box
+	static void outline(uint32_t col, Rect drect) {
+		outline(screen, col, drect);
+	}
+	static void outline(Image& dst, uint32_t col) {
+		outline(dst, col, { 0, 0, dst.w, dst.h });
+	}
+	static void outline(Image& dst, uint32_t col, Rect drect) {
+		for (int x = 0; x < drect.w; x++)
+			px(dst, col, drect.x + x, drect.y),
+			px(dst, col, drect.x + x, drect.y + drect.h - 1);
+		for (int y = 0; y < drect.h; y++)
+			px(dst, col, drect.x, drect.y + y),
+			px(dst, col, drect.x + drect.w - 1, drect.y + y);
+	}
+
+	// blit image to destination
+	static void blit(const Image& src, int dx, int dy) {
+		blit(screen, src, dx, dy, { 0, 0, src.w, src.h });
+	}
+	static void blit(const Image& src, int dx, int dy, Rect srect) {
+		blit(screen, src, dx, dy, srect);
+	}
+	static void blit(Image& dst, const Image& src, int dx, int dy) {
+		blit(dst, src, dx, dy, { 0, 0, src.w, src.h });
+	}
+	static void blit(Image& dst, const Image& src, int dx, int dy, Rect srect) {
+		if ((int)dst.data.size() != dst.w * dst.h || (int)src.data.size() != src.w * src.h)
+			return;
+		uint32_t col = 0;
+		for (int y = 0; y < srect.h; y++)
+			if (y + dy >= 0 && y + dy < dst.h && y + srect.y >= 0 && y + srect.y < src.h)
+				for (int x = 0; x < srect.w; x++)
+					if (x + dx >= 0 && x + dx < dst.w && x + srect.x >= 0 && x + srect.x < src.w) {
+						col = src.data[ (y + srect.y) * src.w + (x + srect.x) ];
+						// transparency check
+						if ((col >> 24) > 0)
+							dst.data[ (dy + y) * dst.w + (dx + x) ] = col;
+					}
+	}
+
+	// print text to image
+	static void print(const string& str, int dx, int dy) {
+		print(screen, str, dx, dy);
+	}
+	static void print(Image& dst, const string& str, int dx, int dy) {
+		static const int FONT_WRAP = 32;
+		for (int i = 0; str[i] != 0; i++) {
+			Rect srect = {
+				( str[i] % FONT_WRAP ) * FONT_W,
+				( str[i] / FONT_WRAP ) * FONT_H,
+				FONT_W, FONT_H  };
+			blit(dst, fontface, (dx + i * FONT_W), dy, srect);
+		}
+	}
+};
+
+
+struct GFX::Scene : GFX {
+	// instance data
+	map<int, Image>      images;
+	map<int, Sprite>     sprites;
+	map<int, Tilemap>    tilemaps;
+	vector<int>          collisions_map, collisions_sprite;
+	Rect                 sceneoffset = { 0, 0 };
+
+	// make
+	int makeimage(int w, int h) {
 		int ptr = pcounter++;
-		auto& img = imagesgl[ptr] = {0};
+		auto& img = images[ptr] = {0};
 		img.w = w;
 		img.h = h;
 		img.data.resize(w * h, 0xff000000);
@@ -100,22 +201,15 @@ struct GFX {
 	Image&   getimage(int ptr)  { return imagesgl.count(ptr) ? imagesgl.at(ptr) : images.at(ptr); }
 	Sprite&  getsprite(int ptr) { return sprites.at(ptr); }
 	Tilemap& getmap(int ptr)    { return tilemaps.at(ptr); }
-	static Image& getimagegl(int ptr)  { return imagesgl.at(ptr); }
 
-	// collision
-	inline int collide_rect(const Rect& r1, const Rect& r2) {
-		return !( r1.x + r1.w - 1 < r2.x 
-				|| r1.x > r2.x + r2.w - 1
-				|| r1.y + r1.h - 1 < r2.y 
-				|| r1.y > r2.y + r2.h - 1 );
+	// collisions
+	int collide_sprite(const Rect& rect) {
+		collisions_sprite = {};
+		for (const auto& [i, sprite] : sprites)
+			if (collide_rect(rect, sprite.hit))
+				collisions_sprite.push_back(i);
+		return collisions_sprite.size();
 	}
-	// int collide_sprite(const Rect& rect) {
-	// 	collisions_sprite = {};
-	// 	for (const auto& [i, sprite] : sprites)
-	// 		if (collide_rect(rect, sprite.hit))
-	// 			collisions_sprite.push_back(i);
-	// 	return collisions_sprite.size();
-	// }
 	int collide_sprite(const Sprite& spr, int xoff=0, int yoff=0) {
 		collisions_sprite = {};
 		// Rect nextpos = { spr.pos.x + xoff, spr.pos.y + yoff, spr.pos.w, spr.pos.h };
@@ -162,89 +256,6 @@ struct GFX {
 	}
 	int collide_all(const Sprite& spr, int xoff=0, int yoff=0) {
 		return collide_map(spr, xoff, yoff) + collide_sprite(spr, xoff, yoff);
-	}
-
-	// single pixel
-	inline void px(int col, int dx, int dy) {
-		px(screen, col, dx, dy);
-	}
-	inline void px(Image& dst, int col, int dx, int dy) {
-		if (dx >= 0 && dx < dst.w && dy >= 0 && dy < dst.h)
-			dst.data[ dy * dst.w + dx ] = col;
-	}
-
-	// fill box with solid color
-	void fill(uint32_t col) {
-		fill(screen, col, { 0, 0, screen.w, screen.h });
-	}
-	void fill(uint32_t col, Rect drect) {
-		fill(screen, col, drect);
-	}
-	void fill(Image& dst, uint32_t col) {
-		fill(dst, col, { 0, 0, dst.w, dst.h });
-	}
-	void fill(Image& dst, uint32_t col, Rect drect) {
-		for (int y = 0; y < drect.h; y++)
-			if (drect.y + y >= 0 && drect.y + y < dst.h)
-				for (int x = 0; x < drect.w; x++)
-					if (drect.x + x >= 0 && drect.x + x < dst.w)
-						dst.data[ (drect.y + y) * dst.w + (drect.x + x) ] = col;
-	}
-
-	// outline box
-	void outline(uint32_t col, Rect drect) {
-		outline(screen, col, drect);
-	}
-	void outline(Image& dst, uint32_t col) {
-		outline(dst, col, { 0, 0, dst.w, dst.h });
-	}
-	void outline(Image& dst, uint32_t col, Rect drect) {
-		for (int x = 0; x < drect.w; x++)
-			px(dst, col, drect.x + x, drect.y),
-			px(dst, col, drect.x + x, drect.y + drect.h - 1);
-		for (int y = 0; y < drect.h; y++)
-			px(dst, col, drect.x, drect.y + y),
-			px(dst, col, drect.x + drect.w - 1, drect.y + y);
-	}
-
-	// blit image to destination
-	void blit(const Image& src, int dx, int dy) {
-		blit(screen, src, dx, dy, { 0, 0, src.w, src.h });
-	}
-	void blit(const Image& src, int dx, int dy, Rect srect) {
-		blit(screen, src, dx, dy, srect);
-	}
-	void blit(Image& dst, const Image& src, int dx, int dy) {
-		blit(dst, src, dx, dy, { 0, 0, src.w, src.h });
-	}
-	void blit(Image& dst, const Image& src, int dx, int dy, Rect srect) {
-		if ((int)dst.data.size() != dst.w * dst.h || (int)src.data.size() != src.w * src.h)
-			return;
-		uint32_t col = 0;
-		for (int y = 0; y < srect.h; y++)
-			if (y + dy >= 0 && y + dy < dst.h && y + srect.y >= 0 && y + srect.y < src.h)
-				for (int x = 0; x < srect.w; x++)
-					if (x + dx >= 0 && x + dx < dst.w && x + srect.x >= 0 && x + srect.x < src.w) {
-						col = src.data[ (y + srect.y) * src.w + (x + srect.x) ];
-						// transparency check
-						if ((col >> 24) > 0)
-							dst.data[ (dy + y) * dst.w + (dx + x) ] = col;
-					}
-	}
-
-	// print text to image
-	void print(const string& str, int dx, int dy) {
-		print(screen, str, dx, dy);
-	}
-	void print(Image& dst, const string& str, int dx, int dy) {
-		static const int FONT_WRAP = 32;
-		for (int i = 0; str[i] != 0; i++) {
-			Rect srect = {
-				( str[i] % FONT_WRAP ) * FONT_W,
-				( str[i] / FONT_WRAP ) * FONT_H,
-				FONT_W, FONT_H  };
-			blit(dst, fontface, (dx + i * FONT_W), dy, srect);
-		}
 	}
 
 	// draw scene

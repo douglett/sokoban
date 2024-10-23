@@ -4,7 +4,7 @@
 using namespace std;
 
 struct SceneGame : Scene {
-	GFX gfx;
+	GFX::Scene gfx;
 	int tmap = 0, playerspr = 0;
 	int overlayimg = 0, overlayspr = 0;
 	int levelno = 0;
