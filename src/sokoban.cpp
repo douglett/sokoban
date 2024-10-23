@@ -16,10 +16,10 @@ SceneWipe   wipe;
 
 
 // switch between scenes
-void Scene::switchscene(GAMESCENE scene) {
+void Scene::switchscene(GAMESCENE scene, int levelno) {
 	// title -> ingame : load level 1
 	if (currentscene == SCENE_TITLE && scene == SCENE_GAME) {
-		game.level2map(0);
+		game.level2map( levelno );
 	}
 	// switch scenes
 	if (currentscene == scene || scene == SCENE_MENU || (currentscene == SCENE_MENU && scene == SCENE_GAME))

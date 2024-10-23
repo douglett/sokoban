@@ -16,7 +16,7 @@ struct Scene {
 	static inline GAMESCENE currentscene = SCENE_TITLE, toscene = SCENE_TITLE;
 	static inline DPad dpad;
 
-	static void switchscene(GAMESCENE scene);
+	static void switchscene(GAMESCENE scene, int levelno=0);
 	
 	virtual void init() {}
 	virtual void update() {}

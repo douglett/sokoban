@@ -1,7 +1,7 @@
 #pragma once
 #include "global.hpp"
 #include "levels_skinner.hpp"
-#include "levels_minicosmos.hpp"
+// #include "levels_minicosmos.hpp"
 #include "scene_wipe.hpp"
 using namespace std;
 
@@ -37,8 +37,8 @@ struct SceneGame : Scene {
 	}
 
 	void level2map(int _levelno) {
-		// auto& level = LEVELS_SKINNER.at( _levelno );
-		auto& level = LEVELS_MINICOSMOS.at( _levelno );
+		auto& level = LEVELS_SKINNER.at( _levelno );
+		// auto& level = LEVELS_MINICOSMOS.at( _levelno );
 		levelno = _levelno;
 
 		for (auto& box : boxes)
