@@ -44,7 +44,7 @@ const vector<string> level3 = {
 };
 
 
-const vector<vector<string>> MINICOSMOS = {
+const vector<vector<string>> LEVELS_MINICOSMOS = {
 {
 // Level 0
 // doug 1

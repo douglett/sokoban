@@ -3,14 +3,16 @@
 #include "scenetitle.hpp"
 #include "scenegame.hpp"
 #include "scenemenu.hpp"
+#include "scene_wipe.hpp"
 using namespace std;
 
 SDLmanager sdl;
 GFX gfx;
 
-SceneTitle title;
-SceneGame  game;
-SceneMenu  menu;
+SceneTitle  title;
+SceneGame   game;
+SceneMenu   menu;
+SceneWipe   wipe;
 
 
 // switch between scenes
@@ -20,7 +22,12 @@ void Scene::switchscene(GAMESCENE scene) {
 		game.level2map(0);
 	}
 	// switch scenes
-	currentscene = scene;
+	if (currentscene == scene || scene == SCENE_MENU || (currentscene == SCENE_MENU && scene == SCENE_GAME))
+		currentscene = scene;
+	else {
+		toscene = scene;
+		wipe.start();
+	}
 }
 
 // get currently active scene
@@ -34,12 +41,19 @@ Scene& getscene() {
 }
 
 void update() {
-	getscene().update();
+	if (wipe.active()) {
+		wipe.update();
+		if (wipe.midpoint())
+			Scene::currentscene = Scene::toscene;
+	}
+	else
+		getscene().update();
 }
 
 void paint() {
 	gfx.fill(0xff000000);
 	getscene().paint();
+	wipe.paint();
 	gfx.print(sdl.fps, 144, 1);
 	sdl.flip(gfx.screen, Scene::dpad);
 }
@@ -56,6 +70,7 @@ int main(int argc, char* args[]) {
 	title.init();
 	game.init();
 	menu.init();
+	wipe.init();
 
 	Scene::switchscene(Scene::SCENE_TITLE);
 

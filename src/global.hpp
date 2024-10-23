@@ -13,7 +13,7 @@ struct Scene {
 
 	static const  int TSIZE = 16;
 	static inline int tsetimage = 0, pimage = 0;
-	static inline GAMESCENE currentscene = SCENE_TITLE;
+	static inline GAMESCENE currentscene = SCENE_TITLE, toscene = SCENE_TITLE;
 	static inline DPad dpad;
 
 	static void switchscene(GAMESCENE scene);

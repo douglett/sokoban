@@ -1,32 +1,27 @@
 #pragma once
 #include "global.hpp"
 #include "levels_skinner.hpp"
+#include "levels_minicosmos.hpp"
+#include "scene_wipe.hpp"
 using namespace std;
 
 struct SceneGame : Scene {
 	GFX::Scene gfx;
+	SceneWipe wipe;
 	int tmap = 0, playerspr = 0;
-	int overlayspr = 0;
 	int levelno = 0;
 	vector<int> boxes;
 	vector<vector<GFX::Rect>> boardstack;
 
 	// animations
 	struct { int dx, dy, box, delta; } walkanim = {0};
-	struct { int dir, delta; } wipeanim = {0};
 
 	void init() {
 		// make sprites and maps
 		tmap = gfx.makemap( 5, 5, TSIZE, tsetimage );
 		playerspr = gfx.makesprite( TSIZE, TSIZE, pimage );
 
-		// overlay box
-		overlayspr = gfx.makespriteimage( gfx.screen.w, gfx.screen.h );
-		auto& ospr = gfx.getsprite( overlayspr );
-		gfx.fill( gfx.getimage(ospr.image), 0xff000000 );
-		ospr.hit = ospr.hurt = { 0 };
-		ospr.z = 1000;
-		ospr.visible = false;
+		wipe.init();
 	}
 
 	void makebox(int tx, int ty) {
@@ -42,7 +37,8 @@ struct SceneGame : Scene {
 	}
 
 	void level2map(int _levelno) {
-		auto& level = LEVELS_SKINNER.at( _levelno );
+		// auto& level = LEVELS_SKINNER.at( _levelno );
+		auto& level = LEVELS_MINICOSMOS.at( _levelno );
 		levelno = _levelno;
 
 		for (auto& box : boxes)
@@ -114,13 +110,14 @@ struct SceneGame : Scene {
 
 	void paint() {
 		gfx.drawscene();
+		wipe.paint();
 	}
 
 	void update() {
 		if (walkanim.dx || walkanim.dy)
 			animatemove();
-		else if (wipeanim.dir)
-			animatewipe();
+		else if (wipe.active())
+			animatelevelwipe();
 		else if (checkwin())
 			;
 		else
@@ -145,19 +142,11 @@ struct SceneGame : Scene {
 				int boxid = gfx.collisions_sprite.at(0);
 				auto& box = gfx.getsprite( boxid );
 				if (!gfx.collide_all( box, tx, ty )) {
-					// box.pos.x += tx;
-					// box.pos.y += ty;
-					// pspr.pos.x += tx;
-					// pspr.pos.y += ty;
-					// pushstate();
 					walkanim = { x, y, boxid };
 					animatemove();
 				}
 			}
 			else {
-				// pspr.pos.x += tx;
-				// pspr.pos.y += ty;
-				// pushstate();
 				walkanim = { x, y };
 				animatemove();
 			}
@@ -176,7 +165,7 @@ struct SceneGame : Scene {
 		if (onpoint == (int)boxes.size()) {
 			printf("win\n");
 			// level2map(levelno + 1);
-			wipeanim = { 1 };
+			wipe.start();
 			return 1;
 		}
 		return 0;
@@ -210,31 +199,9 @@ struct SceneGame : Scene {
 		}
 	}
 
-	void animatewipe() {
-		static const float WIPESTEPS = 50;
-		wipeanim.delta++;
-		auto& ospr = gfx.getsprite( overlayspr );
-		ospr.visible = true;
-		// wipe in
-		if (wipeanim.dir == 1) {
-			ospr.pos.x = -ospr.pos.w + (wipeanim.delta / WIPESTEPS) * ospr.pos.w;
-			if (wipeanim.delta >= WIPESTEPS) {
-				wipeanim = { -1 };
-				level2map(levelno + 1);
-			}
-		}
-		// wipe out
-		else if (wipeanim.dir == -1) {
-			ospr.pos.x = (wipeanim.delta / WIPESTEPS) * ospr.pos.w;
-			if (wipeanim.delta >= WIPESTEPS) {
-				ospr.visible = false;
-				wipeanim = { 0 };
-			}
-		}
-		// just in case
-		else {
-			ospr.visible = false;
-			wipeanim = { 0 };
-		}
+	void animatelevelwipe() {
+		wipe.update();
+		if (wipe.midpoint())
+			level2map(levelno + 1);
 	}
 };
