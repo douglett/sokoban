@@ -13,3 +13,5 @@ Most of the issues here came with class organisation - how should scenes be draw
 Slightly harder, since I worked assuming a single main-loop entry, rather than basic linear programming. This should make it exportable to web using emscripten, in theory.
 
 Should be easy to play and test!
+
+Check the releases tab on the right for latest binaries --->>>
