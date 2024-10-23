@@ -1,6 +1,6 @@
 #pragma once
 #include "global.hpp"
-#include "scenegame.hpp"
+#include "scene_game.hpp"
 using namespace std;
 
 struct SceneMenu : Scene {

@@ -1,8 +1,8 @@
 #include <iostream>
 #include "global.hpp"
-#include "scenetitle.hpp"
-#include "scenegame.hpp"
-#include "scenemenu.hpp"
+#include "scene_title.hpp"
+#include "scene_game.hpp"
+#include "scene_menu.hpp"
 #include "scene_wipe.hpp"
 using namespace std;
 
